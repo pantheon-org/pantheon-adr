@@ -8,7 +8,7 @@
 
 use std::path::Path;
 
-use common::{Error, Result};
+use ahdk_core::{Error, Result};
 
 use crate::completeness::{self, Report, PASS_THRESHOLD, STRICT_THRESHOLD};
 use crate::record::{BranchType, Record, Status};
@@ -169,7 +169,7 @@ pub fn draft_cmd(
     let d = draft::build(&record, &ctx, &all);
 
     if json {
-        return common::output::to_json_pretty(&d).map(|s| format!("{s}\n"));
+        return ahdk_core::output::to_json_pretty(&d).map(|s| format!("{s}\n"));
     }
     if bootstrap {
         return Ok(draft::render_bootstrap(&d));
@@ -215,7 +215,7 @@ pub fn check(
     let report = completeness::check(&record.body, threshold);
 
     let text = if json {
-        common::output::to_json_pretty(&report).map(|s| format!("{s}\n"))?
+        ahdk_core::output::to_json_pretty(&report).map(|s| format!("{s}\n"))?
     } else {
         render_report(slug, &report)
     };
@@ -360,7 +360,7 @@ pub fn list(
     }
 
     if json {
-        return common::output::to_json_pretty(&index::rows(&records)).map(|s| format!("{s}\n"));
+        return ahdk_core::output::to_json_pretty(&index::rows(&records)).map(|s| format!("{s}\n"));
     }
     if records.is_empty() {
         return Ok("No ADRs found.\n".to_string());
@@ -398,7 +398,7 @@ pub fn status(dir: &Path, cwd: &Path, json: bool) -> Result<String> {
             "by_status": counts_to_object(&summary.by_status),
             "by_type": counts_to_object(&summary.by_type),
         });
-        return common::output::to_json_pretty(&payload).map(|s| format!("{s}\n"));
+        return ahdk_core::output::to_json_pretty(&payload).map(|s| format!("{s}\n"));
     }
 
     let project = git::repo_name(cwd).unwrap_or_else(|| "this project".to_string());

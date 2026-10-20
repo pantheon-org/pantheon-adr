@@ -1,6 +1,6 @@
 [package]
 name = "pantheon-adr"
-version = "0.2.4"
+version = "0.2.5"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -23,8 +23,8 @@ name = "pantheon-adr"
 path = "src/main.rs"
 
 [dependencies]
-skill-install = { workspace = true }
-common = { workspace = true }
+ahdk-install = { workspace = true }
+ahdk-core = { workspace = true }
 clap = { workspace = true }
 clap_complete = { workspace = true }
 serde = { workspace = true }
