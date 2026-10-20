@@ -1,0 +1,57 @@
+name: Audit skill
+
+# The bundled skill (adr-creator/) is validated and graded with a released
+# pantheon-skill-auditor, installed through that repository's own action, the way
+# any consuming repository would.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+    paths:
+      - "adr-creator/**"
+      - ".github/workflows/audit-skill.yml"
+  push:
+    branches: [main]
+    paths:
+      - "adr-creator/**"
+      - ".github/workflows/audit-skill.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Audit skill
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install pantheon-skill-auditor
+        uses: pantheon-org/pantheon-skill-auditor@a71472ec078f54ff13b5b74b7e3786779ef28df9 # main at v0.3.1
+        with:
+          version: "0.3.1"
+          sha256: "538863c9929331cd3ff0af6a0f8780fb409592d55757335d91e4627808656799"
+
+      # Exit codes: 0 clean, 1 error, 2 warnings only, 3 usage error. Warnings do
+      # not fail the job (the same policy as tekhne); errors and usage errors do.
+      - name: Validate structure
+        run: |
+          rc=0
+          pantheon-skill-auditor validate structure --allow-dirs=evals adr-creator || rc=$?
+          case "$rc" in
+            0) ;;
+            2) echo "::warning::validate structure reported warnings only" ;;
+            *) exit "$rc" ;;
+          esac
+
+      # Same gate as tekhne: A and A+ pass, B and B+ warn, anything lower fails.
+      - name: Grade the skill
+        run: |
+          grade=$(pantheon-skill-auditor evaluate ./adr-creator --json | jq -r '.grade // "?"')
+          echo "grade: $grade"
+          case "$grade" in
+            A|A+) ;;
+            B+|B) echo "::warning::skill grade $grade is below A" ;;
+            *) echo "::error::skill grade $grade is below B"; exit 1 ;;
+          esac

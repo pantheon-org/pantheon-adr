@@ -1,0 +1,43 @@
+name: Rust CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: Build, test, lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # rustup is preinstalled on GitHub-hosted runners. Keep this version in
+      # sync with rust-toolchain.toml.
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install 1.96.1 --profile minimal --component rustfmt,clippy
+          rustup default 1.96.1
+
+      - name: Format check
+        run: cargo fmt --all --check
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
+      - name: Build
+        run: cargo build --workspace --locked
+
+      # The golden-corpus tests that read live skills from pantheon-org/tekhne
+      # skip themselves without TEKHNE_ROOT; the frozen fixtures always run.
+      - name: Test
+        run: cargo test --workspace --locked
