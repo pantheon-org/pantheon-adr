@@ -9,8 +9,8 @@ use adr_core::commands::{self, CreateArgs, UpdateArgs};
 use adr_core::install_cmd::{run_install, InstallOptions, Selection};
 use adr_core::record::Status;
 use adr_core::{skill_bundle, store};
-use skill_install::env::Environment;
-use skill_install::install::InstallMode;
+use ahdk_install::env::Environment;
+use ahdk_install::install::InstallMode;
 
 /// Enough real prose to satisfy the rubric's word-count rules.
 const PROSE: &str = "Requests cross four services and we cannot follow a single one end to end \

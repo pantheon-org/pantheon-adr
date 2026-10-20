@@ -3,14 +3,14 @@
 //! Decides which agents to target (detected agents by default, an explicit
 //! `--agent` set, or every known agent with `--all`), resolves each target
 //! directory, and installs the already-materialised skill into it using the
-//! shared `skill-install` crate. The logic is separated from `main` so agent
+//! shared `ahdk-install` crate. The logic is separated from `main` so agent
 //! selection and installation can be unit-tested against a temporary
 //! filesystem.
 
 use std::path::{Path, PathBuf};
 
-use common::{Error, Result};
-use skill_install::{
+use ahdk_core::{Error, Result};
+use ahdk_install::{
     agents::{all, by_name, AgentConfig},
     env::Environment,
     install::{install_skill, resolve_target_dir, uninstall_skill, InstallMode},

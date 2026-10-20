@@ -8,7 +8,7 @@
 
 use std::path::{Path, PathBuf};
 
-use common::{Error, Result};
+use ahdk_core::{Error, Result};
 
 include!(concat!(env!("OUT_DIR"), "/embedded_skill.rs"));
 

@@ -11,7 +11,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use common::{Error, Result};
+use ahdk_core::{Error, Result};
 use serde_json::{json, Map, Value};
 
 /// The binary the hooks invoke.
