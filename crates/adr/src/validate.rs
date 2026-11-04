@@ -8,30 +8,23 @@
 //! Prose quality is not checked here. That is `check`'s job, and it scores a
 //! record that is already well formed.
 //!
-//! [`schema_issues`] is the only code that touches the JSON Schema crate and
-//! knows nothing about ADRs, so it can move to a shared crate if another tool
-//! needs the same check.
+//! The schema and heading checks themselves are `pahdk_core::validate`, shared
+//! with the other tools; this module supplies the ADR schema and template and
+//! the checks that need other records.
 
 use std::fs;
 use std::path::Path;
 
+use pahdk_core::frontmatter;
+use pahdk_core::validate::{self, Issue};
 use pahdk_core::{Error, Result};
 use serde::Serialize;
 use serde_json::Value;
 
-use crate::{record, store, template};
+use crate::{store, template};
 
 /// The embedded frontmatter schema.
 const SCHEMA: &str = include_str!("../../../adr-creator/schemas/adr-frontmatter.schema.json");
-
-/// One problem found in a record.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-pub struct Issue {
-    /// Where it was found: `frontmatter /status`, `body`, and so on.
-    pub location: String,
-    /// What is wrong.
-    pub message: String,
-}
 
 /// The result of validating one record file.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -49,68 +42,22 @@ impl Report {
     }
 }
 
-/// Every way `instance` fails `schema`, as `(instance location, message)`.
-pub fn schema_issues(schema: &Value, instance: &Value) -> Result<Vec<(String, String)>> {
-    let validator = jsonschema::validator_for(schema)
-        .map_err(|e| Error::Config(format!("invalid JSON Schema: {e}")))?;
-    let mut issues: Vec<(String, String)> = validator
-        .iter_errors(instance)
-        .map(|e| (e.instance_path().to_string(), e.to_string()))
-        .collect();
-    issues.sort();
-    Ok(issues)
-}
-
 /// Validate the text of one record file.
+///
+/// The frontmatter check and the heading check are `pahdk_core::validate`'s;
+/// the title heading is the one part of the shape that varies per record.
 pub fn validate_content(content: &str) -> Result<Vec<Issue>> {
-    let Some((yaml, body)) = record::split_frontmatter(content) else {
-        return Ok(vec![Issue {
-            location: "frontmatter".into(),
-            message: "no YAML frontmatter found (expected a leading `---` block)".into(),
-        }]);
-    };
-    let mut issues = Vec::new();
+    let schema: Value = serde_json::from_str(SCHEMA)
+        .map_err(|e| Error::Config(format!("embedded schema is not JSON: {e}")))?;
+    let headings = template::required_headings(&template::load()?);
+    let mut issues = validate::document_issues(content, &schema, &headings)?;
 
-    match serde_yaml_ng::from_str::<Value>(yaml) {
-        Err(e) => issues.push(Issue {
-            location: "frontmatter".into(),
-            message: format!("invalid YAML: {e}"),
-        }),
-        Ok(instance) => {
-            let schema: Value = serde_json::from_str(SCHEMA)
-                .map_err(|e| Error::Config(format!("embedded schema is not JSON: {e}")))?;
-            for (location, message) in schema_issues(&schema, &instance)? {
-                issues.push(Issue {
-                    location: format!("frontmatter {location}").trim_end().to_string(),
-                    message,
-                });
-            }
+    if let Some((_, body)) = frontmatter::split(content) {
+        if !body.lines().any(|l| l.starts_with("# ")) {
+            issues.push(Issue::new("body", "missing the level-1 title heading"));
         }
     }
-
-    issues.extend(body_issues(body, &template::load()?));
     Ok(issues)
-}
-
-/// A missing title or section heading, as one issue per heading.
-fn body_issues(body: &str, template: &template::Template) -> Vec<Issue> {
-    let lines: Vec<&str> = body.lines().map(str::trim_end).collect();
-    let mut issues = Vec::new();
-    if !lines.iter().any(|l| l.starts_with("# ")) {
-        issues.push(Issue {
-            location: "body".into(),
-            message: "missing the level-1 title heading".into(),
-        });
-    }
-    for heading in template::required_headings(template) {
-        if !lines.contains(&heading.as_str()) {
-            issues.push(Issue {
-                location: "body".into(),
-                message: format!("missing heading {heading:?}"),
-            });
-        }
-    }
-    issues
 }
 
 /// Validate the record with `slug`.
@@ -135,7 +82,7 @@ pub fn validate_one(dir: &Path, slug: &str) -> Result<Report> {
 /// Silent when the frontmatter does not parse, since `validate_content`
 /// already reported that.
 fn consistency_issues(dir: &Path, slug: &str, content: &str) -> Vec<Issue> {
-    let Some((yaml, _)) = record::split_frontmatter(content) else {
+    let Some((yaml, _)) = frontmatter::split(content) else {
         return Vec::new();
     };
     let Ok(meta) = serde_yaml_ng::from_str::<Value>(yaml) else {
