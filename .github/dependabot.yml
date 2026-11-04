@@ -5,9 +5,10 @@ version: 2
 # major bumps are raised individually so breaking changes are reviewed alone.
 # Ported from pantheon-org/tekhne.
 #
-# Cargo caveat: the pantheon-agentic-harness-dev-kit crates are git dependencies
-# pinned by tag in Cargo.toml. Dependabot does not reliably move a git tag, so
-# bump that tag by hand when the dev-kit cuts a release.
+# Cargo caveat: pahdk-core and pahdk-install are git dependencies pinned by tag in
+# Cargo.toml. Dependabot cannot resolve them (dependency_file_not_resolvable), and
+# that error fails the whole cargo job, so they are ignored below. Bump the tag by
+# hand when pantheon-agentic-harness-dev-kit cuts a release.
 
 updates:
   - package-ecosystem: "cargo"
@@ -20,6 +21,9 @@ updates:
     # compromised release has time to surface before we adopt it.
     cooldown:
       default-days: 7
+    ignore:
+      - dependency-name: "pahdk-core"
+      - dependency-name: "pahdk-install"
     labels:
       - "dependencies"
       - "rust"
