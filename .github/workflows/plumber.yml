@@ -1,0 +1,64 @@
+name: Plumber
+
+# CI/CD security scan of this repository's GitHub Actions workflows (unpinned
+# actions, untrusted shell input, over-broad permissions). Findings surface in the
+# Security tab (Code Scanning SARIF).
+#
+# Gating model (ported from pantheon-org/tekhne): Critical findings BLOCK the PR;
+# everything else is visible in Code Scanning and never blocks. The Plumber action
+# runs with soft-fail + continue-on-error so its own A-E score gate and any
+# transient runtime error never block; the ONLY blocking signal is a Critical
+# finding in the gate step below. Config lives in .plumber.yaml.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+  schedule:
+    # Weekly scan (Mondays 03:41 UTC) to catch newly published action advisories.
+    - cron: "41 3 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  plumber:
+    name: Plumber Score
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      security-events: write # upload SARIF to Code Scanning
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - id: plumber
+        uses: getplumber/plumber@7e581015a1295a49a7af14b346231d2fd8dff695 # v0.7.12
+        continue-on-error: true
+        with:
+          soft-fail: "true"
+          # Publishing a public score badge is an explicit opt-in; keep it off.
+          score-push: "false"
+          output: results.json
+
+      # Reads the JSON report the action wrote. A missing report is a transient
+      # scan error (warn, do not block); a present report with Critical findings
+      # blocks.
+      - name: Gate on Critical findings
+        run: |
+          if [ ! -f results.json ]; then
+            echo "::warning::results.json not found; Plumber did not produce a report (likely a transient scan error). Critical gate skipped this run."
+            exit 0
+          fi
+          critical="$(jq '.plumberScore.counts.critical // 0' results.json)"
+          if [ "$critical" -gt 0 ]; then
+            echo "::error::${critical} Critical-severity Plumber finding(s) present; see the Code Scanning alerts for detail."
+            jq -r '(.plumberScore.codeLosses // [])[] | select(.severity == "critical") | "::error::[\(.code)] \(.count) Critical-severity finding(s)"' results.json
+            exit 1
+          fi
+          echo "No Critical-severity Plumber findings. Gate passed."
