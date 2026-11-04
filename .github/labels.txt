@@ -1,0 +1,4 @@
+# name|color|description  (synced by .github/workflows/sync-labels.yml)
+dependencies|0366d6|Pull requests that update a dependency file
+github-actions|000000|Pull requests that update GitHub Actions code
+rust|dea584|Pull requests that update Rust code

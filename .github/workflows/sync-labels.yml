@@ -1,0 +1,30 @@
+name: Sync Labels
+
+# Creates the labels Dependabot applies (see .github/dependabot.yml). Dependabot
+# cannot create labels itself and comments on its PRs when one is missing.
+# Edit .github/labels.txt to add a label; this runs on push to main or on demand.
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/labels.txt
+      - .github/scripts/sync-labels.sh
+      - .github/workflows/sync-labels.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sync-labels:
+    name: Sync Labels
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Create or update labels
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: bash .github/scripts/sync-labels.sh
