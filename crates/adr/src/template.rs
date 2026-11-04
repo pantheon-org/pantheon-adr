@@ -147,4 +147,29 @@ mod tests {
         let source = "frontmatter: {type: decision}\nbody:\n  title: t\n  sections:\n    - {heading: A, level: 1}\n";
         assert!(parse(source).is_err());
     }
+
+    #[test]
+    fn the_template_has_a_heading_for_every_section_the_rubric_scores() {
+        use crate::completeness::{
+            IMPACT_SECTION, PROBLEM_SECTIONS, RATIONALE_SECTION, SOLUTION_SECTION,
+        };
+        let template = load().unwrap();
+        let headings: Vec<&str> = template
+            .body
+            .sections
+            .iter()
+            .map(|s| s.heading.as_str())
+            .collect();
+        let scored = PROBLEM_SECTIONS.iter().copied().chain([
+            SOLUTION_SECTION,
+            RATIONALE_SECTION,
+            IMPACT_SECTION,
+        ]);
+        for name in scored {
+            assert!(
+                headings.iter().any(|h| h.contains(name)),
+                "the template has no heading containing {name:?}, which `check` scores"
+            );
+        }
+    }
 }

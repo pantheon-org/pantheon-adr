@@ -34,6 +34,12 @@ is `superseded` must also carry `superseded_by`. A test keeps the schema's
 ## What `validate` does not check
 
 - Prose quality: use `pantheon-adr check`.
-- That `supersedes`, `superseded_by` or `related` point at records or files that
-  exist.
-- That the status history is consistent with the current status.
+- That `related` entries exist. They may be URLs or paths outside the checkout,
+  which `undocumented` resolves when it can.
+
+## What `validate` checks beyond the schema
+
+- `supersedes` and `superseded_by` name a record that exists in the directory,
+  and not the record itself.
+- The `status` equals the `to` of the last `history` entry, so a hand-edited
+  status that skipped `update` is caught.

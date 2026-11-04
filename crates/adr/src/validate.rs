@@ -120,10 +120,67 @@ pub fn validate_one(dir: &Path, slug: &str) -> Result<Report> {
         return Err(Error::NotFound(path));
     }
     let content = fs::read_to_string(&path).map_err(|e| Error::io(&path, e))?;
+    let mut issues = validate_content(&content)?;
+    issues.extend(consistency_issues(dir, slug, &content));
     Ok(Report {
         slug: slug.to_string(),
-        issues: validate_content(&content)?,
+        issues,
     })
+}
+
+/// Problems the schema cannot express because they need other files or the
+/// relation between two fields: links to records that do not exist, and a
+/// status that disagrees with the last recorded transition.
+///
+/// Silent when the frontmatter does not parse, since `validate_content`
+/// already reported that.
+fn consistency_issues(dir: &Path, slug: &str, content: &str) -> Vec<Issue> {
+    let Some((yaml, _)) = record::split_frontmatter(content) else {
+        return Vec::new();
+    };
+    let Ok(meta) = serde_yaml_ng::from_str::<Value>(yaml) else {
+        return Vec::new();
+    };
+    let mut issues = Vec::new();
+
+    for field in ["supersedes", "superseded_by"] {
+        let Some(target) = meta.get(field).and_then(Value::as_str) else {
+            continue;
+        };
+        let message = if target == slug {
+            Some("names the record itself".to_string())
+        } else if !store::exists(dir, target) {
+            Some(format!(
+                "names {target:?}, which has no record in this directory"
+            ))
+        } else {
+            None
+        };
+        if let Some(message) = message {
+            issues.push(Issue {
+                location: format!("frontmatter /{field}"),
+                message,
+            });
+        }
+    }
+
+    let last = meta
+        .get("history")
+        .and_then(Value::as_array)
+        .and_then(|h| h.last())
+        .and_then(|t| t.get("to"))
+        .and_then(Value::as_str);
+    if let (Some(last), Some(status)) = (last, meta.get("status").and_then(Value::as_str)) {
+        if last != status {
+            issues.push(Issue {
+                location: "frontmatter /status".into(),
+                message: format!(
+                    "is {status:?} but the last history entry moved the record to {last:?}"
+                ),
+            });
+        }
+    }
+    issues
 }
 
 /// Validate every record in `dir`. A broken record is reported, not fatal.
@@ -227,5 +284,61 @@ mod tests {
         assert_eq!(strings(&schema["properties"]["status"]["enum"]), statuses);
         assert_eq!(strings(&schema["$defs"]["status"]["enum"]), statuses);
         assert_eq!(strings(&schema["properties"]["branch_type"]["enum"]), types);
+    }
+
+    fn on_disk(dir: &Path, slug: &str, content: &str) {
+        fs::write(dir.join(format!("{slug}.md")), content).unwrap();
+    }
+
+    #[test]
+    fn links_to_missing_records_and_self_links_are_reported() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dir = tmp.path();
+        let linked = fresh().replace("author: T\n", "author: T\nsupersedes: ghost\n");
+        on_disk(dir, "x", &linked);
+        let found = validate_one(dir, "x").unwrap().issues;
+        assert!(
+            found
+                .iter()
+                .any(|i| i.location == "frontmatter /supersedes" && i.message.contains("ghost")),
+            "{found:?}"
+        );
+
+        on_disk(dir, "ghost", &fresh());
+        assert!(validate_one(dir, "x").unwrap().is_valid());
+
+        let own = fresh().replace("author: T\n", "author: T\nsupersedes: x\n");
+        on_disk(dir, "x", &own);
+        let found = validate_one(dir, "x").unwrap().issues;
+        assert!(
+            found.iter().any(|i| i.message.contains("itself")),
+            "{found:?}"
+        );
+    }
+
+    #[test]
+    fn a_status_that_disagrees_with_the_history_is_reported() {
+        let tmp = tempfile::tempdir().unwrap();
+        let mut record = Record::new("x", "Adopt X", BranchType::Feat, "T", "2026-09-15", None);
+        record.transition(
+            crate::record::Status::ReviewRequested,
+            "2026-09-16T10:00:00Z",
+        );
+        on_disk(tmp.path(), "x", &record.render().unwrap());
+        assert!(validate_one(tmp.path(), "x").unwrap().is_valid());
+
+        let drifted =
+            record
+                .render()
+                .unwrap()
+                .replacen("status: review-requested", "status: accepted", 1);
+        on_disk(tmp.path(), "x", &drifted);
+        let found = validate_one(tmp.path(), "x").unwrap().issues;
+        assert!(
+            found
+                .iter()
+                .any(|i| i.message.contains("last history entry")),
+            "{found:?}"
+        );
     }
 }

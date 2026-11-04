@@ -193,6 +193,10 @@ invalid and 3 when a named slug does not exist.
 | --- | --- |
 | `--json` | Emit `{total, invalid, records[{slug, issues[{location, message}]}]}`. |
 
+Beyond the schema it checks that `supersedes` and `superseded_by` name an
+existing record other than the record itself, and that `status` matches the
+last `history` entry.
+
 `validate` and `check` are independent: `validate` asks whether the file is
 well formed, `check` asks whether the prose is finished. A fresh template
 passes `validate` and fails `check`. See
@@ -211,7 +215,7 @@ Changes metadata. Never touches the prose.
 | Flag | Effect |
 | --- | --- |
 | `-d, --description <text>` | Replace the title. |
-| `-s, --status <status>` | One of `proposed`, `review-requested`, `accepted`, `deprecated`, `superseded`. |
+| `-s, --status <status>` | One of `proposed`, `review-requested`, `accepted`, `deprecated`, `superseded`. `superseded` needs a replacement: use `--superseded-by`, or pass it alongside. |
 | `--tags <a,b,c>` | Replace the tag list. |
 | `--superseded-by <slug>` | Retire this record in favour of `<slug>`, which must already exist. |
 

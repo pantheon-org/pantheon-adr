@@ -45,6 +45,15 @@ const SIGNALS: [Signal; 10] = [
 ];
 
 impl Signal {
+    /// The words a reader would look for, without markdown markers.
+    #[cfg(test)]
+    fn words(self) -> &'static str {
+        match self {
+            Signal::Heading(_, text) => text,
+            Signal::Phrase(text) => text.trim_matches(|c| c == '*' || c == ':'),
+        }
+    }
+
     /// The label shown to the user.
     fn label(self) -> String {
         match self {
@@ -103,7 +112,7 @@ pub fn find_signal(content: &str) -> Option<String> {
 /// A planning document with a decision signal and no record pointing at it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Finding {
-    /// Path relative to the repository root, with `/` separators.
+    /// Path relative to the scan root, with `/` separators.
     pub path: String,
     /// The first signal that matched.
     pub indicator: String,
@@ -152,7 +161,8 @@ fn markdown_files(dir: &Path, out: &mut Vec<PathBuf>) -> Result<()> {
 
 /// Scan `source_dir` for planning documents with an unlinked decision.
 ///
-/// `adr_dir` and `source_dir` are resolved against `root`. Documents inside
+/// `adr_dir` and `source_dir` are resolved against `root`, which the CLI sets to
+/// the working directory, as for every other command. Documents inside
 /// the ADR directory are the records themselves and are never reported.
 pub fn scan(root: &Path, adr_dir: &Path, source_dir: &Path) -> Result<Scan> {
     let adr_dir = root.join(adr_dir);
@@ -256,5 +266,17 @@ mod tests {
     #[test]
     fn plain_observation_has_no_signal() {
         assert_eq!(find_signal("# Notes\n\nLatency is 40ms at p99.\n"), None);
+    }
+
+    #[test]
+    fn every_signal_is_documented_in_the_skill_reference() {
+        let doc = include_str!("../../../adr-creator/references/context-extraction.md");
+        for signal in SIGNALS {
+            assert!(
+                doc.contains(signal.words()),
+                "context-extraction.md does not mention the signal {:?}",
+                signal.label()
+            );
+        }
     }
 }

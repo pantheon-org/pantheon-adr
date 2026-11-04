@@ -311,7 +311,16 @@ pub fn update(dir: &Path, slug: &str, now: &str, args: &UpdateArgs<'_>) -> Resul
         changes.push("tags".to_string());
     }
     if let Some(status) = args.status {
-        record.transition(Status::parse(status)?, now);
+        let next = Status::parse(status)?;
+        if next == Status::Superseded
+            && args.superseded_by.is_none()
+            && record.meta.superseded_by.is_none()
+        {
+            return Err(Error::Config(format!(
+                "{slug:?} cannot be superseded without a replacement; pass --superseded-by <slug> instead of --status superseded"
+            )));
+        }
+        record.transition(next, now);
         changes.push(format!("status to {status}"));
     }
     if let Some(next) = args.superseded_by {
@@ -502,19 +511,18 @@ pub fn validate_cmd(
 /// Report planning documents that hold a decision no record points back at.
 ///
 /// Returns the report and whether any document was found, so the caller can
-/// exit non-zero. The ADR and source directories are resolved against the
-/// repository root, or the working directory outside a repository.
+/// exit non-zero. Like every other command, the ADR and source directories
+/// are resolved against the working directory.
 pub fn undocumented_cmd(
     dir: &Path,
     cwd: &Path,
     source_dir: Option<&str>,
     json: bool,
 ) -> Result<(String, bool)> {
-    let root = git::repo_root(cwd).map_or_else(|| cwd.to_path_buf(), std::path::PathBuf::from);
     let source = source_dir
         .filter(|s| !s.is_empty())
         .unwrap_or(undocumented::DEFAULT_SOURCE_DIR);
-    let scan = undocumented::scan(&root, dir, Path::new(source))?;
+    let scan = undocumented::scan(cwd, dir, Path::new(source))?;
     let found = !scan.undocumented.is_empty();
 
     if json {
@@ -525,7 +533,7 @@ pub fn undocumented_cmd(
         return Ok((
             format!(
                 "No {source} directory found under {} - nothing to scan.\n",
-                root.display()
+                cwd.display()
             ),
             false,
         ));

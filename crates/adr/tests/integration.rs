@@ -324,3 +324,39 @@ fn every_record_the_tool_writes_passes_validate() {
 
     assert!(commands::validate_cmd(&dir, Some("missing"), false).is_err());
 }
+
+#[test]
+fn update_refuses_a_superseded_status_without_a_replacement() {
+    let tmp = tempfile::tempdir().expect("temp dir");
+    let dir = tmp.path().join("adr");
+    for slug in ["old", "new"] {
+        let args = CreateArgs {
+            slug: Some(slug),
+            description: Some("A decision"),
+            ..Default::default()
+        };
+        commands::create(&dir, tmp.path(), "2026-09-15", &args).expect("create");
+    }
+    let bare = UpdateArgs {
+        status: Some("superseded"),
+        ..Default::default()
+    };
+    let err = commands::update(&dir, "old", "2026-09-16T10:00:00Z", &bare)
+        .expect_err("a bare superseded status must be refused")
+        .to_string();
+    assert!(err.contains("--superseded-by"), "{err}");
+    assert_eq!(
+        store::load(&dir, "old").unwrap().meta.status,
+        Status::Proposed
+    );
+
+    // With a replacement, either spelling works and the record validates.
+    let both = UpdateArgs {
+        status: Some("superseded"),
+        superseded_by: Some("new"),
+        ..Default::default()
+    };
+    commands::update(&dir, "old", "2026-09-16T10:00:00Z", &both).expect("supersede");
+    let (text, verdict) = commands::validate_cmd(&dir, None, false).expect("validate");
+    assert!(verdict.is_ok(), "{text}");
+}

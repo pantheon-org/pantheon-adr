@@ -180,7 +180,7 @@ enum Command {
     ///
     /// Exits 2 when any are found, 0 when none are.
     Undocumented {
-        /// Where planning documents live, relative to the repository root.
+        /// Where planning documents live, relative to the working directory.
         #[arg(long = "source-dir", default_value = ".context")]
         source_dir: String,
         /// Machine-readable output.

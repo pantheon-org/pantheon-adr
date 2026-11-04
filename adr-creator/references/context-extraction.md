@@ -44,8 +44,9 @@ A quick scan of section headings and phrasing narrows down where to look:
 
 | Signal in the source document | Likely a decision? |
 | --- | --- |
-| A section titled "Decision", "Recommendation", "Recommended Approach", or "Proposed Approach" | Yes, read it first |
-| "We will...", "Adopt Option A", "Going forward, ..." | Yes |
+| A section titled "Decision", "Recommendation", "Recommended Approach", or "Proposed Approach", or a "Chosen Solution" subsection | Yes, read it first |
+| A bold "**Decision:**" or "**Recommendation:**" label | Yes |
+| "We will...", "Adopt Option A", "Going forward, we..." | Yes |
 | An "Open Questions" or "Options" section, later resolved elsewhere | Yes once resolved; do not extract while still open |
 | A "Summary" or "Findings" section with no stated direction | No, this is observational |
 | An inline aside ("worth noting that...") | No, too ephemeral for a record |
@@ -143,7 +144,7 @@ is covered (exit 0). Add `--json` for a machine-readable list.
 
 Pass `--dir` (or set `ADR_DIR`) when records do not live in `docs/adr`, and
 `--source-dir` when planning documents live somewhere other than `.context`.
-Both resolve against the repository root. The ADR directory is excluded from
+Both resolve against the working directory, like every other command. The ADR directory is excluded from
 the scan, so it is safe to run even when the two overlap.
 
 The check is on demand: no hook runs it. Wire it into CI or a pre-commit hook
