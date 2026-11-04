@@ -3,24 +3,6 @@
 version = 4
 
 [[package]]
-name = "ahdk-core"
-version = "0.0.0"
-source = "git+https://github.com/pantheon-org/agentic-harness-dev-kit.git?tag=v0.1.0-rc.1#8285ef632e785fe3dc2ad9723f270bd8bd19c734"
-dependencies = [
- "serde",
- "serde_json",
- "thiserror",
-]
-
-[[package]]
-name = "ahdk-install"
-version = "0.0.0"
-source = "git+https://github.com/pantheon-org/agentic-harness-dev-kit.git?tag=v0.1.0-rc.1#8285ef632e785fe3dc2ad9723f270bd8bd19c734"
-dependencies = [
- "ahdk-core",
-]
-
-[[package]]
 name = "anstream"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -235,13 +217,31 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "384b8ab6d37215f3c5301a95a4accb5d64aa607f1fcb26a11b5303878451b4fe"
 
 [[package]]
+name = "pahdk-core"
+version = "0.0.0"
+source = "git+https://github.com/pantheon-org/pantheon-agentic-harness-dev-kit.git?tag=v0.1.0-rc.2#d81f00655cdc4e85f431f93ee38be4c62a42b6f0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "pahdk-install"
+version = "0.0.0"
+source = "git+https://github.com/pantheon-org/pantheon-agentic-harness-dev-kit.git?tag=v0.1.0-rc.2#d81f00655cdc4e85f431f93ee38be4c62a42b6f0"
+dependencies = [
+ "pahdk-core",
+]
+
+[[package]]
 name = "pantheon-adr"
 version = "0.2.5"
 dependencies = [
- "ahdk-core",
- "ahdk-install",
  "clap",
  "clap_complete",
+ "pahdk-core",
+ "pahdk-install",
  "serde",
  "serde_json",
  "serde_yaml_ng",

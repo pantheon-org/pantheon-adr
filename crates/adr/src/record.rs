@@ -11,7 +11,7 @@
 use std::fmt;
 use std::path::{Path, PathBuf};
 
-use ahdk_core::{Error, Result};
+use pahdk_core::{Error, Result};
 use serde::{Deserialize, Serialize};
 
 /// The default ADR directory, relative to the repository root.
