@@ -1,0 +1,61 @@
+amends "package://github.com/jdx/hk/releases/download/v1.49.0/hk@1.49.0#/Config.pkl"
+import "package://github.com/jdx/hk/releases/download/v1.49.0/hk@1.49.0#/Builtins.pkl"
+
+// Tools are pinned in mise.toml; HK_MISE=1 runs each hook under `mise x`.
+// `check` is the non-mutating verification (used by `hk check` and CI); `fix`
+// is the mutating variant (used by the pre-commit hook, which stages results).
+
+// -- pre-commit (fast, staged files only) --
+local preCommit = new Mapping<String, Step> {
+    ["rustfmt"] {
+        glob = List("*.rs")
+        check = "cargo fmt --all --check"
+        fix = "cargo fmt --all"
+    }
+    ["rumdl"] {
+        glob = List("*.md")
+        check = "rumdl check --config .rumdl.toml {{files}}"
+        fix = "rumdl check --fix --config .rumdl.toml {{files}}"
+    }
+    ["yamllint"] {
+        glob = List("*.yml", "*.yaml")
+        shell = "sh -c"
+        check = "command -v yq >/dev/null 2>&1 && yq eval '.' {{files}} >/dev/null"
+    }
+    ["shellcheck"] {
+        glob = List("*.sh")
+        shell = "sh -c"
+        check = "command -v shellcheck >/dev/null 2>&1 && shellcheck {{files}}"
+    }
+}
+
+// -- pre-push (matches the rust-ci workflow) --
+local prePush = new Mapping<String, Step> {
+    ["clippy"] {
+        glob = List("*.rs", "Cargo.toml", "Cargo.lock")
+        check = "cargo clippy --workspace --all-targets --locked -- -D warnings"
+    }
+    ["test"] {
+        glob = List("*.rs", "Cargo.toml", "Cargo.lock")
+        check = "cargo test --workspace --locked"
+    }
+}
+
+hooks {
+    ["pre-commit"] {
+        fix = true       // apply fix steps and stage the results
+        stash = "git"    // stash unstaged changes so only staged content is linted
+        steps = preCommit
+    }
+    ["pre-push"] {
+        steps = prePush
+    }
+    // Special hooks powering `hk fix` and `hk check`.
+    ["fix"] {
+        fix = true
+        steps = preCommit
+    }
+    ["check"] {
+        steps = preCommit
+    }
+}
