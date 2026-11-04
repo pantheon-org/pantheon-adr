@@ -1,0 +1,85 @@
+name: agnix
+
+# Lints the bundled skill with agnix (https://github.com/agent-sh/agnix) against
+# Claude Code's documented formats: frontmatter fields and values, allowed-tools
+# names, broken links and leaked tool-call markup. The skill validator and auditor
+# do not check these.
+#
+# Runs on every pull request and every push to main. A pull request fails only on
+# an error it introduces, meaning an error whose rule and file are not already an
+# error on the base branch (.github/scripts/agnix-introduced-errors.sh). Errors
+# already on main and warnings show as annotations and never fail. Configuration
+# lives in .agnix.toml. Never runs --fix.
+#
+# Ported from pantheon-org/tekhne, without the issue tracking and the pull request
+# comment (this repository bundles one skill, so annotations are enough).
+#
+# No third-party action for agnix itself: the pinned release is downloaded from its
+# public URL and checked against a pinned SHA-256 before it runs. The digest was
+# taken from a tarball whose GitHub build attestation verified against agnix's
+# release.yml.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # On a bump, re-verify the new tarball's attestation locally and replace the digest:
+  #   gh attestation verify agnix-x86_64-unknown-linux-gnu.tar.gz --repo agent-sh/agnix \
+  #     --signer-workflow agent-sh/agnix/.github/workflows/release.yml
+  AGNIX_VERSION: "0.56.6"
+  AGNIX_SHA256: "3228e88286c44da93bd591cc6358549c4a3d685b44c9d64625955d668528a155"
+
+jobs:
+  agnix:
+    name: agnix
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # The base branch is linted with the head's config, so a change to the rules
+      # is compared like for like and cannot make every old error look new.
+      - name: Check out the base branch
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+
+      - name: Install agnix (pinned digest)
+        run: |
+          set -euo pipefail
+          asset="agnix-x86_64-unknown-linux-gnu.tar.gz"
+          dir="$RUNNER_TEMP/agnix"
+          mkdir -p "$dir"
+          curl -fsSL -o "$dir/$asset" \
+            "https://github.com/agent-sh/agnix/releases/download/v${AGNIX_VERSION}/${asset}"
+          echo "${AGNIX_SHA256}  $dir/$asset" | sha256sum -c -
+          tar -xzf "$dir/$asset" -C "$dir"
+          echo "$dir" >> "$GITHUB_PATH"
+
+      # agnix exits 1 when it reports errors; the verdict is read from the JSON
+      # instead, so neither run fails this step.
+      - name: Lint
+        run: |
+          agnix --version
+          agnix -c .agnix.toml --format github . || true
+          agnix -c .agnix.toml --format json . > agnix.json || true
+
+      - name: Lint the base branch
+        if: github.event_name == 'pull_request'
+        run: |
+          (cd base && agnix -c ../.agnix.toml --format json . > ../agnix-base.json) || true
+
+      - name: Fail on introduced errors
+        if: github.event_name == 'pull_request'
+        run: bash .github/scripts/agnix-introduced-errors.sh agnix.json agnix-base.json
