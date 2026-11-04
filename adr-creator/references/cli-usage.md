@@ -5,7 +5,7 @@ is offline and deterministic: every command is a pure function of the records on
 disk, the current git branch, and today's date.
 
 ```bash
-cargo install --path crates/adr   # from the tekhne repository root
+cargo install --path crates/adr   # from the pantheon-adr repository root
 pantheon-adr --version
 ```
 

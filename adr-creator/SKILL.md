@@ -17,19 +17,19 @@ Treat a record as a dated, immutable account of one decision and the forces that
 
 ## Prerequisites
 
-This skill drives the `pantheon-adr` CLI from the `tekhne` repository, and is
-distributed by it (`pantheon-adr skill install`). Confirm the binary is on
-`PATH`:
+This skill drives the `pantheon-adr` CLI from the `pantheon-org/pantheon-adr`
+repository, and is distributed by it (`pantheon-adr skill install`). Confirm the
+binary is on `PATH`:
 
 ```bash
 pantheon-adr --version
 ```
 
 It is not published to crates.io, so `cargo install pantheon-adr` will fail.
-Install a `tekhne` release binary (cargo-dist), or build from a checkout:
+Install a `pantheon-adr` release binary (cargo-dist), or build from a checkout:
 
 ```bash
-cargo install --path crates/adr   # from the tekhne repository root
+cargo install --path crates/adr   # from the pantheon-adr repository root
 ```
 
 There is no self-contained fallback for these commands. The binary is
