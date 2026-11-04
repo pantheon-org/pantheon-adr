@@ -23,8 +23,8 @@ name = "pantheon-adr"
 path = "src/main.rs"
 
 [dependencies]
-ahdk-install = { workspace = true }
-ahdk-core = { workspace = true }
+pahdk-install = { workspace = true }
+pahdk-core = { workspace = true }
 clap = { workspace = true }
 clap_complete = { workspace = true }
 serde = { workspace = true }
