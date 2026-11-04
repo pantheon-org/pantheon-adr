@@ -1,5 +1,5 @@
 {
-  "skill": "documentation/adr-creator",
+  "skill": "adr-creator",
   "date": "2026-09-15",
   "dimensions": {
     "antiPatternQuality": 11,
