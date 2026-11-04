@@ -1,0 +1,43 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+#
+# CodeRabbit PR review, same setup as pantheon-org/tekhne. CodeRabbit runs as a
+# GitHub App, so there is no workflow or secret here: install the app on the
+# repository to turn it on, uninstall it (or set reviews.auto_review.enabled to
+# false) to turn it off.
+#
+# Advisory only: request_changes_workflow stays false so it never blocks a merge.
+
+language: en-US
+
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: true
+
+  auto_review:
+    enabled: true
+    drafts: false
+
+  path_filters:
+    # Covered by the Audit Skill workflow; avoid a second opinion on the same diff.
+    - "!adr-creator/**"
+    - "!target/**"
+    - "!**/*.lock"
+    - "!Cargo.lock"
+
+  path_instructions:
+    - path: ".github/workflows/**"
+      instructions: |
+        Every third-party action must be pinned by commit SHA (or image digest).
+        Flag mutable tags, overly broad permissions, and secrets exposed to
+        untrusted triggers.
+    - path: "crates/**/*.rs"
+      instructions: |
+        Flag unwrap/expect/panic in non-test code, unchecked indexing, and
+        public API changes without matching docs or tests.
+
+chat:
+  auto_reply: true
