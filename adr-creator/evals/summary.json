@@ -16,7 +16,7 @@
       "One decision per record",
       "index.md is generated, never hand-edited",
       "Extracted records record provenance in frontmatter `related`",
-      "check-undocumented-decisions.sh finds planning documents with no linked record"
+      "pantheon-adr undocumented finds planning documents with no linked record"
     ],
     "uncovered_instructions": [
       "Valid statuses are proposed, review-requested, accepted, deprecated, superseded, with no rejected status"

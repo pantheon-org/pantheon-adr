@@ -242,6 +242,14 @@ pantheon-adr status --json | jq -e '(.by_status.proposed // 0) == 0'
 Regenerates `index.md` from the records' frontmatter, grouped by status in
 lifecycle order. Derived output: overwrite it freely, never hand-edit it.
 
+### `pantheon-adr undocumented`
+
+Lists planning documents (`.context` by default, or `--source-dir`) that
+contain a decision signal such as `## Decision` or `We will` and that no
+record links under its frontmatter `related` list. Exits 2 when any are found
+and 0 when none are, so it can gate CI. `--json` prints
+`{"scanned": true, "undocumented": [{"path": "...", "indicator": "..."}]}`.
+
 ### `pantheon-adr sync`
 
 Detects the agent harnesses this project uses and wires the hook commands into

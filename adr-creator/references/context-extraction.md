@@ -134,17 +134,17 @@ self-explanatory today.
 If a team accumulates design docs, reviews, or planning notes as a matter of
 course, it is worth periodically checking whether any of them contain a decision
 (per the signals above) that never got a record.
-`scripts/check-undocumented-decisions.sh` automates this: it scans a
+`pantheon-adr undocumented` automates this: it scans a
 planning-document directory (`.context` by default) for the same
 decision-shaped headings and phrasing listed above, cross-references them
 against the `related` lists of every existing record, and reports any document
 that looks decided but is not linked from one (exit 2), or confirms everything
-is covered (exit 0).
+is covered (exit 0). Add `--json` for a machine-readable list.
 
-Pass `--adr-dir` when records do not live in `docs/adr`, and `--source-dir` when
-planning documents live somewhere other than `.context`. The ADR directory is
-excluded from the scan, so it is safe to run even when the two overlap.
+Pass `--dir` (or set `ADR_DIR`) when records do not live in `docs/adr`, and
+`--source-dir` when planning documents live somewhere other than `.context`.
+Both resolve against the repository root. The ADR directory is excluded from
+the scan, so it is safe to run even when the two overlap.
 
-Like the `related` convention itself this is a documentation-side check, not
-something `pantheon-adr` runs internally. Wire it into CI or a pre-commit hook
+The check is on demand: no hook runs it. Wire it into CI or a pre-commit hook
 if you want it enforced rather than run on demand.

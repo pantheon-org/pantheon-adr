@@ -206,3 +206,60 @@ fn skill_installs_into_a_temp_agent_dir() {
         "adr-creator"
     );
 }
+
+#[test]
+fn undocumented_reports_only_unlinked_decisions() {
+    let tmp = tempfile::tempdir().expect("temp dir");
+    let root = tmp.path();
+    let adr = root.join("docs").join("adr");
+    let ctx = root.join(".context");
+    std::fs::create_dir_all(&ctx).unwrap();
+
+    std::fs::write(
+        ctx.join("spike.md"),
+        "# Spike\n\n## Decision\nWe will use Redis.\n",
+    )
+    .unwrap();
+    std::fs::write(ctx.join("linked.md"), "## Decision\nAdopt Option B.\n").unwrap();
+    std::fs::write(ctx.join("notes.md"), "# Notes\nLatency is 40ms.\n").unwrap();
+
+    commands::init(&adr, root, Some("demo"), false, false).expect("init");
+    let args = CreateArgs {
+        slug: Some("adopt-b"),
+        description: Some("Adopt B"),
+        ..Default::default()
+    };
+    commands::create(&adr, root, "2026-09-15", &args).expect("create");
+    let mut record = store::load(&adr, "adopt-b").unwrap();
+    record.meta.related = vec!["../../.context/linked.md".to_string()];
+    store::save(&adr, &record).unwrap();
+
+    let (text, found) =
+        commands::undocumented_cmd(Path::new("docs/adr"), root, None, false).expect("scan");
+    assert!(found);
+    assert!(text.contains(".context/spike.md"), "{text}");
+    assert!(text.contains("Indicator: ## Decision"), "{text}");
+    assert!(!text.contains("linked.md"), "{text}");
+    assert!(!text.contains("notes.md"), "{text}");
+    assert!(text.contains("Total: 1 undocumented decision(s)"), "{text}");
+
+    let (json, _) =
+        commands::undocumented_cmd(Path::new("docs/adr"), root, None, true).expect("json");
+    let value: serde_json::Value = serde_json::from_str(&json).unwrap();
+    assert_eq!(value["undocumented"][0]["path"], ".context/spike.md");
+
+    // Linking the spike clears the finding.
+    record
+        .meta
+        .related
+        .push("../../.context/spike.md".to_string());
+    store::save(&adr, &record).unwrap();
+    let (text, found) =
+        commands::undocumented_cmd(Path::new("docs/adr"), root, None, false).expect("rescan");
+    assert!(!found, "{text}");
+
+    // A missing source directory is not an error.
+    let (text, found) =
+        commands::undocumented_cmd(Path::new("docs/adr"), root, Some("nope"), false).unwrap();
+    assert!(!found && text.contains("nothing to scan"), "{text}");
+}

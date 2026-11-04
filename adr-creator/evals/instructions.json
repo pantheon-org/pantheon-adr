@@ -76,7 +76,7 @@
       "why_given": "new knowledge"
     },
     {
-      "content": "Run scripts/check-undocumented-decisions.sh to find planning documents with a decision that no record's `related` list points at.",
+      "content": "Run pantheon-adr undocumented to find planning documents with a decision that no record's `related` list points at.",
       "type": "workflow",
       "why_given": "new knowledge"
     }

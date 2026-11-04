@@ -12,7 +12,7 @@ use pahdk_core::{Error, Result};
 
 use crate::completeness::{self, Report, PASS_THRESHOLD, STRICT_THRESHOLD};
 use crate::record::{BranchType, Record, Status};
-use crate::{draft, git, hooks, index, store, sync};
+use crate::{draft, git, hooks, index, store, sync, undocumented};
 
 /// Everything `create` needs, gathered so the signature stays readable.
 #[derive(Debug, Default, Clone)]
@@ -442,6 +442,59 @@ pub fn index_cmd(dir: &Path, today: &str) -> Result<String> {
         records.len(),
         if records.len() == 1 { "" } else { "s" }
     ))
+}
+
+/// Report planning documents that hold a decision no record points back at.
+///
+/// Returns the report and whether any document was found, so the caller can
+/// exit non-zero. The ADR and source directories are resolved against the
+/// repository root, or the working directory outside a repository.
+pub fn undocumented_cmd(
+    dir: &Path,
+    cwd: &Path,
+    source_dir: Option<&str>,
+    json: bool,
+) -> Result<(String, bool)> {
+    let root = git::repo_root(cwd).map_or_else(|| cwd.to_path_buf(), std::path::PathBuf::from);
+    let source = source_dir
+        .filter(|s| !s.is_empty())
+        .unwrap_or(undocumented::DEFAULT_SOURCE_DIR);
+    let scan = undocumented::scan(&root, dir, Path::new(source))?;
+    let found = !scan.undocumented.is_empty();
+
+    if json {
+        let text = pahdk_core::output::to_json_pretty(&scan).map(|s| format!("{s}\n"))?;
+        return Ok((text, found));
+    }
+    if !scan.scanned {
+        return Ok((
+            format!(
+                "No {source} directory found under {} - nothing to scan.\n",
+                root.display()
+            ),
+            false,
+        ));
+    }
+    if !found {
+        return Ok((
+            "All planning documents with decision indicators are linked from a record.\n"
+                .to_string(),
+            false,
+        ));
+    }
+    let mut out = String::from(
+        "WARNING: the following documents contain decision indicators but are not\n\
+         listed under any record's `related` frontmatter. Consider extracting an ADR\n\
+         for each (see references/context-extraction.md):\n\n",
+    );
+    for f in &scan.undocumented {
+        out.push_str(&format!("  {}\n    Indicator: {}\n\n", f.path, f.indicator));
+    }
+    out.push_str(&format!(
+        "Total: {} undocumented decision(s)\nRun `pantheon-adr list` to see existing records before creating new ones.\n",
+        scan.undocumented.len()
+    ));
+    Ok((out, true))
 }
 
 /// Wire the ADR hooks into whichever agent harnesses the project uses.

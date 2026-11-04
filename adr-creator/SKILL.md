@@ -148,10 +148,10 @@ Expected result: `sync` patches whichever agent harness configuration the projec
 
 ```bash
 # Find planning documents with a decision that no record points back at.
-./scripts/check-undocumented-decisions.sh
+pantheon-adr undocumented
 ```
 
-Expected result: exit 0 with a confirmation line when everything is covered, or exit 2 with a list of undocumented files. See [Deriving an ADR from an Existing Document](references/context-extraction.md).
+Expected result: exit 0 with a confirmation line when everything is covered, or exit 2 with a list of undocumented files (`--json` for a machine-readable list). See [Deriving an ADR from an Existing Document](references/context-extraction.md).
 
 ## Anti-Patterns
 
