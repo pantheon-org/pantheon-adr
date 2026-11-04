@@ -1,0 +1,42 @@
+name: aislop
+
+# Code-quality gate (aislop): catches dead imports, duplicate logic, unsafe casts,
+# narrative comments, swallowed errors, oversized functions and similar, scored
+# out of 100. Enforced in CI because local hooks are bypassable (--no-verify,
+# web-UI merges, API commits). Ported from pantheon-org/tekhne.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  # Supersede an in-flight run when the ref updates (e.g. a rebase), so stale
+  # runs are cancelled instead of piling up.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-gate:
+    name: aislop quality gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      # Blocking gate. `aislop ci` exits 1 below ci.failBelow (default 70) or on any
+      # error-severity diagnostic. Scope is the whole repository, Rust and skill
+      # scripts included. aislop is pinned so the score depends only on the
+      # repository, not on a new aislop release. Nothing updates this version
+      # automatically: it is an inline npx version, which Dependabot does not read.
+      # Bump it by hand and check the score before merging.
+      - name: aislop ci
+        run: npx --yes aislop@0.17.0 ci .
