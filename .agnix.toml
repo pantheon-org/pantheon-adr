@@ -15,9 +15,6 @@ exclude = [
   # Test fixtures hold deliberately broken skills.
   "**/tests/**",
   "**/testdata/**",
-  # Skill manifests, not Claude Code plugin manifests; agnix reads them as
-  # plugin.json files and reports CC-PL-001/007/016 on every one.
-  "**/.tekhne/**",
 ]
 
 [rules]
