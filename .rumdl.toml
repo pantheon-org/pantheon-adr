@@ -1,0 +1,10 @@
+# rumdl configuration. Lint everything with: mise run lint   (or: rumdl check .)
+# Same rules switched off as the tekhne configuration.
+
+[global]
+disable = ["MD060", "MD032", "MD013", "MD022", "MD024", "MD031", "MD037", "MD040", "MD047"]
+include = ["**/*.md"]
+exclude = ["target/**"]
+
+[MD010]
+code-blocks = false
