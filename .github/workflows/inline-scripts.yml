@@ -1,0 +1,34 @@
+name: Inline Scripts
+
+# Rule: a `run:` block in a workflow or composite action may hold at most 15 lines
+# of code (blank and comment lines excluded). Longer logic belongs in a script under
+# .github/scripts/, where it can be run locally, shellchecked and tested; the step
+# then calls it. Values reach the script through `env:`, never by pasting `${{ }}`
+# into its text. A block that must stay long can opt out with a line
+# `# inline-ok: <reason>` inside it. Ported from pantheon-org/tekhne.
+#
+# No path filter, so the check always reports a conclusion; also runs on push to
+# main as a post-merge safety net. Deterministic and offline.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  inline-scripts:
+    name: Inline Scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Check run blocks are short
+        run: bash .github/scripts/check-inline-scripts.sh
