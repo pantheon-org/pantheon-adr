@@ -31,4 +31,3 @@ Add expert-signal keywords: NEVER, ALWAYS, production, gotcha, pitfall, anti-pat
 ### Freedom Calibration (14/15) — 1 pt available
 
 Balance prescriptive language (NEVER/ALWAYS) with permissive alternatives (consider, optionally, may).
-
