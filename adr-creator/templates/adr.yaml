@@ -1,0 +1,65 @@
+# The shape of a new ADR, read by `pantheon-adr create` and by
+# `pantheon-adr validate`. Edit the shape here, not in the Rust source.
+#
+# The frontmatter fields and their allowed values are defined by
+# ../schemas/adr-frontmatter.schema.json; this file holds only the defaults a
+# new record starts with and the body layout.
+frontmatter:
+  type: decision
+  status: proposed
+
+# The body is a level-1 title followed by `sections`, in order. A section
+# carries at most one of:
+#   placeholder - one line written directly under the heading
+#   bullets     - a list written under the heading, after a blank line
+# A section with neither is a parent heading whose children follow it.
+# `validate` requires every heading below to be present at its level.
+body:
+  title: "{title}"
+  sections:
+    - heading: Problem Statement
+      level: 2
+    - heading: Context
+      level: 3
+      placeholder: "<!-- Describe the situation requiring this decision -->"
+    - heading: Goals
+      level: 3
+      placeholder: "<!-- What this decision must achieve -->"
+    - heading: Non-Goals
+      level: 3
+      placeholder: "<!-- Explicitly out of scope -->"
+    - heading: Decision Record
+      level: 2
+    - heading: Options Considered
+      level: 3
+      placeholder: "<!-- List alternatives evaluated -->"
+    - heading: Chosen Solution
+      level: 3
+      placeholder: "<!-- What was decided and implemented -->"
+    - heading: Rationale
+      level: 3
+      placeholder: "<!-- Why this option over alternatives -->"
+    - heading: Implementation
+      level: 2
+    - heading: Key Changes
+      level: 3
+      placeholder: "<!-- Files/modules changed -->"
+    - heading: Testing Strategy
+      level: 3
+      placeholder: "<!-- How correctness is verified -->"
+    - heading: Challenges & Solutions
+      level: 2
+      placeholder: "<!-- Technical or process obstacles encountered -->"
+    - heading: Impact Assessment
+      level: 2
+      bullets:
+        - '- **Performance**: <!-- impact or "none" -->'
+        - '- **Security**: <!-- impact or "none" -->'
+        - '- **Maintenance**: <!-- impact or "none" -->'
+    - heading: Risks & Pitfalls
+      level: 2
+      bullets:
+        - '- **Risk**: <!-- describe -->  **Mitigation**: <!-- describe or "accepted" -->'
+    - heading: Outcome & Lessons
+      level: 2
+      placeholder: "<!-- Fill in post-merge: results, metrics, lessons learned -->"

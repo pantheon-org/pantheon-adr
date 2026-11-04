@@ -263,3 +263,64 @@ fn undocumented_reports_only_unlinked_decisions() {
         commands::undocumented_cmd(Path::new("docs/adr"), root, Some("nope"), false).unwrap();
     assert!(!found && text.contains("nothing to scan"), "{text}");
 }
+
+#[test]
+fn every_record_the_tool_writes_passes_validate() {
+    let tmp = tempfile::tempdir().expect("temp dir");
+    let dir = tmp.path().join("docs").join("adr");
+    commands::init(&dir, tmp.path(), Some("demo"), false, false).expect("init");
+
+    for slug in ["first", "second"] {
+        let args = CreateArgs {
+            slug: Some(slug),
+            description: Some("A decision"),
+            ..Default::default()
+        };
+        commands::create(&dir, tmp.path(), "2026-09-15", &args).expect("create");
+    }
+    // Fill every placeholder in place, keeping every heading.
+    let mut record = store::load(&dir, "first").expect("load");
+    record.body = record
+        .body
+        .replace("<!-- impact or \"none\" -->", "about 1% CPU");
+    while let Some(start) = record.body.find("<!--") {
+        let end = start + record.body[start..].find("-->").expect("closed comment") + 3;
+        record.body.replace_range(start..end, PROSE);
+    }
+    store::save(&dir, &record).expect("save");
+    commands::review(&dir, "first", "2026-09-16T10:00:00Z").expect("review");
+    commands::update(
+        &dir,
+        "first",
+        "2026-09-17T10:00:00Z",
+        &UpdateArgs {
+            superseded_by: Some("second"),
+            tags: Some("tracing, otel"),
+            ..Default::default()
+        },
+    )
+    .expect("supersede");
+
+    let (text, verdict) = commands::validate_cmd(&dir, None, false).expect("validate");
+    assert!(verdict.is_ok(), "{text}");
+    assert!(text.contains("2 records checked, 0 invalid"), "{text}");
+
+    // Break one record and the verdict turns, naming the field.
+    let path = dir.join("second.md");
+    let broken = std::fs::read_to_string(&path)
+        .unwrap()
+        .replace("status: proposed", "status: rejected");
+    std::fs::write(&path, broken).unwrap();
+
+    let (text, verdict) = commands::validate_cmd(&dir, None, false).expect("validate");
+    assert!(verdict.is_err(), "{text}");
+    assert!(text.contains("FAIL  second"), "{text}");
+    assert!(text.contains("frontmatter /status"), "{text}");
+    assert!(text.contains("ok    first"), "{text}");
+
+    let (json, _) = commands::validate_cmd(&dir, Some("second"), true).expect("json");
+    let value: serde_json::Value = serde_json::from_str(&json).unwrap();
+    assert_eq!(value["invalid"], 1);
+
+    assert!(commands::validate_cmd(&dir, Some("missing"), false).is_err());
+}

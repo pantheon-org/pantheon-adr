@@ -181,6 +181,23 @@ Rationale text where more than 60% of the words are `describe`, `decision`,
 `context`, `placeholder`, `example`, `tbd` or `todo`. Such a section scores as
 if it were empty, cap included.
 
+### `pantheon-adr validate [slug]`
+
+Checks record files against their declared shape: the frontmatter against
+`schemas/adr-frontmatter.schema.json`, and the body against the headings in
+`templates/adr.yaml`. With no slug it checks every record in the directory and
+reports a malformed one instead of stopping. It exits 1 when any record is
+invalid and 3 when a named slug does not exist.
+
+| Flag | Effect |
+| --- | --- |
+| `--json` | Emit `{total, invalid, records[{slug, issues[{location, message}]}]}`. |
+
+`validate` and `check` are independent: `validate` asks whether the file is
+well formed, `check` asks whether the prose is finished. A fresh template
+passes `validate` and fails `check`. See
+[Record Template and Schema](template-and-schema.md).
+
 ### `pantheon-adr review <slug>`
 
 Re-runs the check and, at 80 or above, moves the status to `review-requested`

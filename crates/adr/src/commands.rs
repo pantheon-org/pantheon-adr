@@ -12,7 +12,7 @@ use pahdk_core::{Error, Result};
 
 use crate::completeness::{self, Report, PASS_THRESHOLD, STRICT_THRESHOLD};
 use crate::record::{BranchType, Record, Status};
-use crate::{draft, git, hooks, index, store, sync, undocumented};
+use crate::{draft, git, hooks, index, store, sync, undocumented, validate};
 
 /// Everything `create` needs, gathered so the signature stays readable.
 #[derive(Debug, Default, Clone)]
@@ -442,6 +442,61 @@ pub fn index_cmd(dir: &Path, today: &str) -> Result<String> {
         records.len(),
         if records.len() == 1 { "" } else { "s" }
     ))
+}
+
+/// Validate records against the frontmatter schema and the body template.
+///
+/// With a slug, validates that record; without, every record in `dir`. The
+/// verdict is an error when any record has an issue, so the caller exits
+/// non-zero after printing the report.
+pub fn validate_cmd(
+    dir: &Path,
+    slug: Option<&str>,
+    json: bool,
+) -> Result<(String, std::result::Result<(), Error>)> {
+    let reports = match slug {
+        Some(slug) => vec![validate::validate_one(dir, slug)?],
+        None => validate::validate_all(dir)?,
+    };
+    let invalid = reports.iter().filter(|r| !r.is_valid()).count();
+
+    let text = if json {
+        let payload = serde_json::json!({
+            "total": reports.len(),
+            "invalid": invalid,
+            "records": reports,
+        });
+        pahdk_core::output::to_json_pretty(&payload).map(|s| format!("{s}\n"))?
+    } else if reports.is_empty() {
+        format!("No records found in {}.\n", dir.display())
+    } else {
+        let mut out = String::new();
+        for r in &reports {
+            if r.is_valid() {
+                out.push_str(&format!("ok    {}\n", r.slug));
+                continue;
+            }
+            out.push_str(&format!("FAIL  {}\n", r.slug));
+            for issue in &r.issues {
+                out.push_str(&format!("        {}: {}\n", issue.location, issue.message));
+            }
+        }
+        out.push_str(&format!(
+            "\n{} record{} checked, {invalid} invalid.\n",
+            reports.len(),
+            if reports.len() == 1 { "" } else { "s" }
+        ));
+        out
+    };
+    let verdict = if invalid == 0 {
+        Ok(())
+    } else {
+        Err(Error::Config(format!(
+            "{invalid} of {} record(s) failed validation",
+            reports.len()
+        )))
+    };
+    Ok((text, verdict))
 }
 
 /// Report planning documents that hold a decision no record points back at.

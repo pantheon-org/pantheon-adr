@@ -164,6 +164,18 @@ enum Command {
         #[command(flatten)]
         dir: DirArgs,
     },
+    /// Validate records against the frontmatter schema and the body template.
+    ///
+    /// Checks every record, or just the one named. Exits 1 when any is invalid.
+    Validate {
+        /// The record's slug; every record when omitted.
+        slug: Option<String>,
+        /// Machine-readable output.
+        #[arg(long)]
+        json: bool,
+        #[command(flatten)]
+        dir: DirArgs,
+    },
     /// Find planning documents with a decision that no record links to.
     ///
     /// Exits 2 when any are found, 0 when none are.
@@ -390,6 +402,11 @@ fn main() {
         Command::Index { dir } => emit(commands::index_cmd(
             &adr_dir(dir.dir.as_deref()),
             &date::today(),
+        )),
+        Command::Validate { slug, json, dir } => emit_gated(commands::validate_cmd(
+            &adr_dir(dir.dir.as_deref()),
+            slug.as_deref(),
+            json,
         )),
         Command::Undocumented {
             source_dir,
