@@ -22,6 +22,8 @@ github:
       trustedGithubActions:
         - getplumber/plumber
         - googleapis/release-please-action # Release automation (release-please.yml)
+        - peter-evans/find-comment # PR comment lookup (agnix.yml)
+        - peter-evans/create-or-update-comment # PR comment upsert (agnix.yml)
     pipelineMustNotExecuteUnverifiedScripts:
       enabled: true
       trustedUrls:
