@@ -1,0 +1,45 @@
+name: Release Auto-merge
+
+# Mondays: squash-merges the open release-please PR so a release lands without a
+# human clicking merge. The merge runs under the pantheon-ai-bot App token so the
+# push to main fires release-please.yml, which then tags the version.
+# Ported from pantheon-org/tekhne. Needs the org secret GH_APP_PRIVATE_KEY.
+
+on:
+  schedule:
+    # Mondays 08:37 UTC. Cron is UTC; there is no DST handling.
+    - cron: "37 8 * * 1"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-automerge
+  cancel-in-progress: false
+
+jobs:
+  automerge:
+    name: Merge open release PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mint pantheon-ai-bot token
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: "Iv23ligzn16vkDCWfHgc"
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Checkout scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+
+      - name: Merge open release-please PR
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+        run: bash .github/scripts/release-automerge.sh
