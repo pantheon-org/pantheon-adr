@@ -21,6 +21,7 @@ github:
       minimumStars: 0
       trustedGithubActions:
         - getplumber/plumber
+        - googleapis/release-please-action # Release automation (release-please.yml)
     pipelineMustNotExecuteUnverifiedScripts:
       enabled: true
       trustedUrls:
