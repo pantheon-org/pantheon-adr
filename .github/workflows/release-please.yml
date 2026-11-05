@@ -1,0 +1,56 @@
+name: Release Please
+
+# Keeps one rolling release PR up to date on every push to main (version bump in
+# crates/adr/Cargo.toml and Cargo.lock, plus CHANGELOG.md, from conventional
+# commits). Once that PR is merged, the same run tags the new version, and the tag
+# starts release.yml (cargo-dist), which builds and publishes the GitHub Release.
+# release-please is told not to create the GitHub Release itself, because cargo-dist
+# creates it and fails if one exists. Ported from pantheon-org/tekhne.
+#
+# Uses the pantheon-ai-bot App token because pushes made with GITHUB_TOKEN do not
+# trigger other workflows, so the tag would never start release.yml.
+# Needs the org secret GH_APP_PRIVATE_KEY.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+# Never cancel a run mid-way: it could leave a version bumped but untagged.
+concurrency:
+  group: release-please
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    name: Update release PR and tag releases
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mint pantheon-ai-bot token
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: "Iv23ligzn16vkDCWfHgc"
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Tag the crate version if it has no tag yet
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+        run: bash .github/scripts/tag-release.sh
