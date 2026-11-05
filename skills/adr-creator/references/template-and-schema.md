@@ -5,15 +5,15 @@ both. Neither is hard-coded in the binary's source.
 
 | File | Defines | Used by |
 | --- | --- | --- |
-| `assets/templates/adr.yaml` | The default frontmatter `type`, and the body: title, section headings, levels and placeholder text | `create` renders it; `validate` requires its headings |
-| `assets/schemas/adr-frontmatter.schema.json` | Every frontmatter field, its type, allowed values and which are required (JSON Schema 2020-12) | `validate` |
+| `assets/adr.yaml` | The default frontmatter `type`, and the body: title, section headings, levels and placeholder text | `create` renders it; `validate` requires its headings |
+| `assets/adr-frontmatter.schema.json` | Every frontmatter field, its type, allowed values and which are required (JSON Schema 2020-12) | `validate` |
 
 Both are embedded in the `pantheon-adr` binary at build time, so an installed
 binary and a checkout of the skill agree.
 
 ## The template
 
-`assets/templates/adr.yaml` lists `body.sections` in order. Each entry has a
+`assets/adr.yaml` lists `body.sections` in order. Each entry has a
 `heading`, a `level` (2 for `##`, 3 for `###`) and at most one of:
 
 - `placeholder`: one line written directly under the heading;

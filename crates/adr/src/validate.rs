@@ -2,8 +2,8 @@
 //!
 //! Two checks, each driven by a file shipped with the `adr-creator` skill:
 //!
-//! - the frontmatter, against `assets/schemas/adr-frontmatter.schema.json`;
-//! - the body, which must contain every heading `assets/templates/adr.yaml` lists.
+//! - the frontmatter, against `assets/adr-frontmatter.schema.json`;
+//! - the body, which must contain every heading `assets/adr.yaml` lists.
 //!
 //! Prose quality is not checked here. That is `check`'s job, and it scores a
 //! record that is already well formed.
@@ -24,8 +24,7 @@ use serde_json::Value;
 use crate::{store, template};
 
 /// The embedded frontmatter schema.
-const SCHEMA: &str =
-    include_str!("../../../skills/adr-creator/assets/schemas/adr-frontmatter.schema.json");
+const SCHEMA: &str = include_str!("../../../skills/adr-creator/assets/adr-frontmatter.schema.json");
 
 /// The result of validating one record file.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

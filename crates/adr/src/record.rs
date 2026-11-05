@@ -366,7 +366,7 @@ pub fn resolve_dir(flag: Option<&str>, env_value: Option<&str>) -> PathBuf {
     PathBuf::from(DEFAULT_DIR)
 }
 
-/// The Branch ADR body, rendered from `skills/adr-creator/assets/templates/adr.yaml`.
+/// The Branch ADR body, rendered from `skills/adr-creator/assets/adr.yaml`.
 ///
 /// The headings are load-bearing: [`crate::completeness`] scores sections by
 /// name, so renaming one drops its weight and caps the record's score.

@@ -8,7 +8,7 @@ bundled `adr-creator` agent skill. See `README.md` for what it does and how it i
 - `crates/adr/`: the only workspace member. `src/lib.rs` documents each module; `tests/integration.rs` holds the
   integration tests; `docs/design/` holds the design notes.
 - `skills/adr-creator/`: the skill (`SKILL.md`, `references/`, `evals/`, and `assets/`, which holds the record
-  template `templates/adr.yaml` and the frontmatter schema `schemas/adr-frontmatter.schema.json`). `build.rs`
+  template `assets/adr.yaml` and the frontmatter schema `assets/adr-frontmatter.schema.json`). `build.rs`
   embeds it in the binary, so a change here changes the binary.
 - `.github/workflows/`: CI. `rust-ci.yml` is the source of truth for what must pass.
 - `.context/`: gitignored working state. Never commit it.

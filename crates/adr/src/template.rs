@@ -1,6 +1,6 @@
 //! The ADR template: the shape of a new record's body.
 //!
-//! The shape lives in `skills/adr-creator/assets/templates/adr.yaml`, embedded at compile
+//! The shape lives in `skills/adr-creator/assets/adr.yaml`, embedded at compile
 //! time, so the skill documents it and the tool renders it from one source.
 //! [`render`] builds a new record's body and [`required_headings`] lists what
 //! `validate` expects to find in any record.
@@ -9,7 +9,7 @@ use pahdk_core::{Error, Result};
 use serde::Deserialize;
 
 /// The embedded template source.
-const SOURCE: &str = include_str!("../../../skills/adr-creator/assets/templates/adr.yaml");
+const SOURCE: &str = include_str!("../../../skills/adr-creator/assets/adr.yaml");
 
 /// The parsed template.
 #[derive(Debug, Clone, Deserialize)]

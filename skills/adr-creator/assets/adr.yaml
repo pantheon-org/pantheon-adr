@@ -2,7 +2,7 @@
 # `pantheon-adr validate`. Edit the shape here, not in the Rust source.
 #
 # The frontmatter fields and their allowed values are defined by
-# ../schemas/adr-frontmatter.schema.json; this file holds only the defaults a
+# adr-frontmatter.schema.json; this file holds only the defaults a
 # new record starts with and the body layout.
 frontmatter:
   type: decision

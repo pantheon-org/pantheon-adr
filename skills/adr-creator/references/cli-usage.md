@@ -184,8 +184,8 @@ if it were empty, cap included.
 ### `pantheon-adr validate [slug]`
 
 Checks record files against their declared shape: the frontmatter against
-`assets/schemas/adr-frontmatter.schema.json`, and the body against the headings in
-`assets/templates/adr.yaml`. With no slug it checks every record in the directory and
+`assets/adr-frontmatter.schema.json`, and the body against the headings in
+`assets/adr.yaml`. With no slug it checks every record in the directory and
 reports a malformed one instead of stopping. It exits 1 when any record is
 invalid and 3 when a named slug does not exist.
 
