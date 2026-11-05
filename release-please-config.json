@@ -14,7 +14,7 @@
         {
           "type": "toml",
           "path": "/Cargo.lock",
-          "jsonpath": "$.package[?(@.name=='pantheon-adr')].version"
+          "jsonpath": "$.package[?(@.name.value=='pantheon-adr')].version"
         }
       ]
     }
