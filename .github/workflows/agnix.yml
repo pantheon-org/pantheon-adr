@@ -11,8 +11,12 @@ name: agnix
 # already on main and warnings show as annotations and never fail. Configuration
 # lives in .agnix.toml. Never runs --fix.
 #
-# Ported from pantheon-org/tekhne, without its issue tracking. One "## agnix" pull
-# request comment shows PASS or FAIL and is updated in place on each run.
+# Ported from pantheon-org/tekhne. Issues: one per error (rule and file) and one per
+# warning rule listing every affected file (.github/scripts/agnix-file-issues.sh). A
+# pull request opens a missing issue but never edits or closes one; the run on main
+# opens missing issues, refreshes warning file lists and closes issues whose finding
+# is gone. One "## agnix" pull request comment shows PASS or FAIL and is updated in
+# place on each run.
 #
 # No third-party action for agnix itself: the pinned release is downloaded from its
 # public URL and checked against a pinned SHA-256 before it runs. The digest was
@@ -27,6 +31,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
   pull-requests: write
 
 concurrency:
@@ -43,7 +48,7 @@ env:
 jobs:
   agnix:
     name: agnix
-    # A fork's token cannot comment, so forks are skipped. Pushes to main are always
+    # A fork's token cannot comment or file issues, so forks are skipped. Pushes to main are always
     # from this repository.
     if: github.event_name == 'push' || github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-latest
@@ -83,6 +88,20 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           (cd base && agnix -c ../.agnix.toml --format json . > ../agnix-base.json) || true
+
+      # Never blocks: a failure here leaves the PR comment and annotations as the
+      # only signal. Values reach the script through env, never by being pasted
+      # into it.
+      - name: File issues for findings
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          MODE: ${{ github.event_name == 'push' && 'main' || 'pr' }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          TRACKED_FILE: tracked-issues.md
+        run: bash .github/scripts/agnix-file-issues.sh agnix.json
 
       # continue-on-error so the comment is still posted; the "Fail" step below
       # turns an introduced error into a failed job once the comment is up.

@@ -5,7 +5,7 @@
 # Builds comment.md, the body of the "## agnix" pull request comment, from the agnix
 # output and the introduced-errors list.
 # Run by .github/workflows/agnix.yml from the workspace root.
-# Reads:  agnix.json, introduced-errors.txt
+# Reads:  agnix.json, introduced-errors.txt, tracked-issues.md (optional)
 # Env:    AGNIX_VERSION
 # Writes: comment.md
 
@@ -34,7 +34,13 @@ escape() { sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' -e 's/`/\&#96
         done
   fi
   echo
-  echo "Only an error the pull request introduces fails this check. Errors already on \`main\` and warnings do not. Findings are also shown as annotations on the changed files."
+  echo "Only an error the pull request introduces fails this check. Errors already on \`main\` and warnings are tracked in GitHub issues and do not. Findings are also shown as annotations on the changed files."
+  if [ -s tracked-issues.md ]; then
+    echo
+    echo "Tracked in:"
+    echo
+    cat tracked-issues.md
+  fi
   if [ "$warnings" -gt 0 ]; then
     echo
     echo "<details><summary>Warnings by rule</summary>"

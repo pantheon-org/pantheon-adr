@@ -2,3 +2,5 @@
 dependencies|0366d6|Pull requests that update a dependency file
 github-actions|000000|Pull requests that update GitHub Actions code
 rust|dea584|Pull requests that update Rust code
+bug|d73a4a|Something is not working
+enhancement|a2eeef|New feature or request
