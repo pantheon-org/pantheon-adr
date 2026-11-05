@@ -39,6 +39,14 @@ jobs:
           permission-contents: write
           permission-pull-requests: write
 
+      # The script is read from the repository, so the job needs a copy of it. Only
+      # .github/scripts is fetched, with no credentials: the script uses gh alone.
+      - name: Checkout scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+
       - name: Rebase behind, non-draft PRs
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
