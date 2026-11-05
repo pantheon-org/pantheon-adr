@@ -5,7 +5,7 @@ is offline and deterministic: every command is a pure function of the records on
 disk, the current git branch, and today's date.
 
 ```bash
-cargo install --path crates/adr   # from the tekhne repository root
+cargo install --path crates/adr   # from the pantheon-adr repository root
 pantheon-adr --version
 ```
 
@@ -184,8 +184,8 @@ if it were empty, cap included.
 ### `pantheon-adr validate [slug]`
 
 Checks record files against their declared shape: the frontmatter against
-`schemas/adr-frontmatter.schema.json`, and the body against the headings in
-`templates/adr.yaml`. With no slug it checks every record in the directory and
+`assets/schemas/adr-frontmatter.schema.json`, and the body against the headings in
+`assets/templates/adr.yaml`. With no slug it checks every record in the directory and
 reports a malformed one instead of stopping. It exits 1 when any record is
 invalid and 3 when a named slug does not exist.
 

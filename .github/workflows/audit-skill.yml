@@ -1,6 +1,6 @@
 name: Audit skill
 
-# The bundled skill (adr-creator/) is validated and graded with a released
+# The bundled skill (skills/adr-creator/) is validated and graded with a released
 # pantheon-skill-auditor, installed through that repository's own action, the way
 # any consuming repository would.
 
@@ -9,12 +9,12 @@ on:
     types: [opened, synchronize, reopened]
     branches: [main]
     paths:
-      - "adr-creator/**"
+      - "skills/adr-creator/**"
       - ".github/workflows/audit-skill.yml"
   push:
     branches: [main]
     paths:
-      - "adr-creator/**"
+      - "skills/adr-creator/**"
       - ".github/workflows/audit-skill.yml"
 
 permissions:
@@ -38,7 +38,7 @@ jobs:
       - name: Validate structure
         run: |
           rc=0
-          pantheon-skill-auditor validate structure --allow-dirs=evals adr-creator || rc=$?
+          pantheon-skill-auditor validate structure --allow-dirs=evals skills/adr-creator || rc=$?
           case "$rc" in
             0) ;;
             2) echo "::warning::validate structure reported warnings only" ;;
@@ -48,7 +48,7 @@ jobs:
       # Same gate as tekhne: A and A+ pass, B and B+ warn, anything lower fails.
       - name: Grade the skill
         run: |
-          grade=$(pantheon-skill-auditor evaluate ./adr-creator --json | jq -r '.grade // "?"')
+          grade=$(pantheon-skill-auditor evaluate ./skills/adr-creator --json | jq -r '.grade // "?"')
           echo "grade: $grade"
           case "$grade" in
             A|A+) ;;

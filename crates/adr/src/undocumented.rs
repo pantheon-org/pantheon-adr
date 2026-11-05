@@ -270,7 +270,7 @@ mod tests {
 
     #[test]
     fn every_signal_is_documented_in_the_skill_reference() {
-        let doc = include_str!("../../../adr-creator/references/context-extraction.md");
+        let doc = include_str!("../../../skills/adr-creator/references/context-extraction.md");
         for signal in SIGNALS {
             assert!(
                 doc.contains(signal.words()),

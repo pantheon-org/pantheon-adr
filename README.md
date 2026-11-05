@@ -24,7 +24,7 @@ cargo test --workspace --locked
 The shared helpers come from
 [pantheon-agentic-harness-dev-kit](https://github.com/pantheon-org/pantheon-agentic-harness-dev-kit)
 (`pahdk-core`, `pahdk-install`), pinned to a git tag until they are published to crates.io. The
-skill in `adr-creator/` is embedded into the binary at build time and audited in CI with
+skill in `skills/adr-creator/` is embedded into the binary at build time and audited in CI with
 [pantheon-skill-auditor](https://github.com/pantheon-org/pantheon-skill-auditor).
 
 The tool keeps its state under `$XDG_DATA_HOME/tekhne/adr` (or `~/.local/share/tekhne/adr`), the path
@@ -33,5 +33,5 @@ it used before it moved here, so existing data stays where it is.
 ## History
 
 Extracted from [pantheon-org/tekhne](https://github.com/pantheon-org/tekhne) with `git filter-repo`
-(`crates/adr` and `skills/documentation/adr-creator`). Commit messages keep their original `#NNN`
+(`crates/adr` and `skills/adr-creator`). Commit messages keep their original `#NNN`
 references, which point at tekhne pull requests.

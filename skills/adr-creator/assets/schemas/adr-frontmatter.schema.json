@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/pantheon-org/pantheon-adr/adr-creator/schemas/adr-frontmatter.schema.json",
+  "$id": "https://github.com/pantheon-org/pantheon-adr/skills/adr-creator/assets/schemas/adr-frontmatter.schema.json",
   "title": "ADR frontmatter",
   "description": "The YAML frontmatter of an Architecture Decision Record, as written by pantheon-adr.",
   "type": "object",
