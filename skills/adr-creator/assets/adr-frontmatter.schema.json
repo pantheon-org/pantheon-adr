@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pantheon-org/pantheon-adr/skills/adr-creator/assets/adr-frontmatter.schema.json",
+  "title": "ADR frontmatter",
+  "description": "The YAML frontmatter of an Architecture Decision Record, as written by pantheon-adr.",
+  "type": "object",
+  "required": ["title", "type", "branch_type", "status", "date", "author"],
+  "additionalProperties": false,
+  "properties": {
+    "title": { "type": "string", "minLength": 1 },
+    "type": { "const": "decision" },
+    "branch_type": { "enum": ["feat", "fix", "docs", "chore"] },
+    "status": {
+      "enum": ["proposed", "review-requested", "accepted", "deprecated", "superseded"]
+    },
+    "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+    "author": { "type": "string", "minLength": 1 },
+    "branch": { "type": "string", "minLength": 1 },
+    "pr": { "type": "integer", "minimum": 1 },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "supersedes": { "type": "string", "minLength": 1 },
+    "superseded_by": { "type": "string", "minLength": 1 },
+    "related": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "changed_files": { "type": "array", "items": { "type": "string" } },
+    "history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["from", "to", "at"],
+        "additionalProperties": false,
+        "properties": {
+          "from": { "$ref": "#/$defs/status" },
+          "to": { "$ref": "#/$defs/status" },
+          "at": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}"
+          }
+        }
+      }
+    }
+  },
+  "if": { "properties": { "status": { "const": "superseded" } }, "required": ["status"] },
+  "then": { "required": ["superseded_by"] },
+  "$defs": {
+    "status": {
+      "enum": ["proposed", "review-requested", "accepted", "deprecated", "superseded"]
+    }
+  }
+}

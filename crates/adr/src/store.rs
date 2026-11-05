@@ -54,12 +54,8 @@ pub fn load(dir: &Path, slug: &str) -> Result<Record> {
     Record::parse(slug, &text)
 }
 
-/// Load every record in `dir`, sorted by slug.
-///
-/// A file that fails to parse is reported rather than skipped: a record with
-/// broken frontmatter is a problem to fix, not one to hide. An absent directory
-/// yields an empty collection, so `list` on a fresh repository is not an error.
-pub fn load_all(dir: &Path) -> Result<Vec<Record>> {
+/// The slug of every record file in `dir`, sorted. An absent directory yields none.
+pub fn slugs(dir: &Path) -> Result<Vec<String>> {
     if !dir.is_dir() {
         return Ok(Vec::new());
     }
@@ -79,8 +75,19 @@ pub fn load_all(dir: &Path) -> Result<Vec<Record>> {
         slugs.push(stem.to_string());
     }
     slugs.sort();
+    Ok(slugs)
+}
 
-    slugs.into_iter().map(|slug| load(dir, &slug)).collect()
+/// Load every record in `dir`, sorted by slug.
+///
+/// A file that fails to parse is reported rather than skipped: a record with
+/// broken frontmatter is a problem to fix, not one to hide. An absent directory
+/// yields an empty collection, so `list` on a fresh repository is not an error.
+pub fn load_all(dir: &Path) -> Result<Vec<Record>> {
+    slugs(dir)?
+        .into_iter()
+        .map(|slug| load(dir, &slug))
+        .collect()
 }
 
 /// A count of records by status and by branch type, for `adr status`.

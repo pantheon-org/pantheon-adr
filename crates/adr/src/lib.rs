@@ -23,3 +23,6 @@ pub mod record;
 pub mod skill_bundle;
 pub mod store;
 pub mod sync;
+pub mod template;
+pub mod undocumented;
+pub mod validate;

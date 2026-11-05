@@ -15,10 +15,11 @@ serde_yaml_ng = "0.10"
 clap = { version = "4", features = ["derive"] }
 clap_complete = "4"
 tempfile = "3"
-# The shared Pantheon Agentic Harness Dev Kit crates. A git tag until they are published
-# to crates.io; the tag is immutable, so bump it deliberately.
-pahdk-core = { git = "https://github.com/pantheon-org/pantheon-agentic-harness-dev-kit.git", tag = "v0.1.0-rc.2" }
-pahdk-install = { git = "https://github.com/pantheon-org/pantheon-agentic-harness-dev-kit.git", tag = "v0.1.0-rc.2" }
+# The shared Pantheon Agentic Harness Dev Kit crates, pinned to a commit on the dev-kit's main
+# branch until the dev-kit cuts a tag that includes `validate`. Both crates
+# must use the same revision so the tools share one copy of pahdk-core.
+pahdk-core = { git = "https://github.com/pantheon-org/pantheon-agentic-harness-dev-kit.git", rev = "6d2e26052cdda1801332fab69730233a2df39e2e", features = ["validate"] }
+pahdk-install = { git = "https://github.com/pantheon-org/pantheon-agentic-harness-dev-kit.git", rev = "6d2e26052cdda1801332fab69730233a2df39e2e" }
 
 [profile.release]
 lto = "thin"

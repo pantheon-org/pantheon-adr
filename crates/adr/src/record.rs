@@ -11,6 +11,7 @@
 use std::fmt;
 use std::path::{Path, PathBuf};
 
+use pahdk_core::frontmatter::{self, FENCE};
 use pahdk_core::{Error, Result};
 use serde::{Deserialize, Serialize};
 
@@ -19,9 +20,6 @@ pub const DEFAULT_DIR: &str = "docs/adr";
 
 /// The environment variable that overrides the ADR directory.
 pub const DIR_ENV: &str = "ADR_DIR";
-
-/// The frontmatter delimiter.
-const FENCE: &str = "---";
 
 /// Where a decision sits in its lifecycle.
 ///
@@ -222,7 +220,10 @@ impl Record {
             slug: slug.to_string(),
             meta: Frontmatter {
                 title: title.to_string(),
-                doc_type: "decision".to_string(),
+                doc_type: crate::template::load()
+                    .expect("the embedded ADR template is valid")
+                    .frontmatter
+                    .doc_type,
                 branch_type,
                 status: Status::Proposed,
                 date: today.to_string(),
@@ -275,7 +276,7 @@ impl Record {
 
     /// Parse a record from file content, taking its slug from the file stem.
     pub fn parse(slug: &str, content: &str) -> Result<Record> {
-        let (yaml, body) = split_frontmatter(content).ok_or_else(|| {
+        let (yaml, body) = frontmatter::split(content).ok_or_else(|| {
             Error::Config(format!(
                 "{slug}: no YAML frontmatter found (expected a leading `---` block)"
             ))
@@ -288,42 +289,6 @@ impl Record {
             body: body.to_string(),
         })
     }
-}
-
-/// Split `content` into its frontmatter YAML and the body that follows it.
-///
-/// Returns `None` when the content does not open with a `---` fence, so a file
-/// without frontmatter is reported as such rather than silently parsed as an
-/// empty record.
-///
-/// Both `\n` and `\r\n` line endings are accepted. Records are always written
-/// with `\n`, but a clone on a machine with `core.autocrlf=true` converts them
-/// on checkout, and refusing those would make every command fail on a
-/// repository that is otherwise perfectly valid.
-fn split_frontmatter(content: &str) -> Option<(&str, &str)> {
-    let rest = strip_line_break(content.strip_prefix(FENCE)?)?;
-    let end = find_closing_fence(rest)?;
-    let yaml = &rest[..end];
-    let after = &rest[end + FENCE.len()..];
-    Some((yaml, after.trim_start_matches(['\r', '\n'])))
-}
-
-/// Strip one leading line break, in either convention.
-fn strip_line_break(text: &str) -> Option<&str> {
-    text.strip_prefix("\r\n")
-        .or_else(|| text.strip_prefix('\n'))
-}
-
-/// The byte offset of the closing `---` fence, which must start its own line.
-fn find_closing_fence(rest: &str) -> Option<usize> {
-    let mut offset = 0;
-    for line in rest.split_inclusive('\n') {
-        if line.trim_end() == FENCE {
-            return Some(offset);
-        }
-        offset += line.len();
-    }
-    None
 }
 
 /// Derive a slug and branch type from a git branch name.
@@ -401,60 +366,13 @@ pub fn resolve_dir(flag: Option<&str>, env_value: Option<&str>) -> PathBuf {
     PathBuf::from(DEFAULT_DIR)
 }
 
-/// The Branch ADR body template, with one HTML-comment placeholder per section.
+/// The Branch ADR body, rendered from `skills/adr-creator/assets/adr.yaml`.
 ///
 /// The headings are load-bearing: [`crate::completeness`] scores sections by
 /// name, so renaming one drops its weight and caps the record's score.
 fn render_template(title: &str) -> String {
-    format!(
-        "# {title}\n\
-         \n\
-         ## Problem Statement\n\
-         \n\
-         ### Context\n\
-         <!-- Describe the situation requiring this decision -->\n\
-         \n\
-         ### Goals\n\
-         <!-- What this decision must achieve -->\n\
-         \n\
-         ### Non-Goals\n\
-         <!-- Explicitly out of scope -->\n\
-         \n\
-         ## Decision Record\n\
-         \n\
-         ### Options Considered\n\
-         <!-- List alternatives evaluated -->\n\
-         \n\
-         ### Chosen Solution\n\
-         <!-- What was decided and implemented -->\n\
-         \n\
-         ### Rationale\n\
-         <!-- Why this option over alternatives -->\n\
-         \n\
-         ## Implementation\n\
-         \n\
-         ### Key Changes\n\
-         <!-- Files/modules changed -->\n\
-         \n\
-         ### Testing Strategy\n\
-         <!-- How correctness is verified -->\n\
-         \n\
-         ## Challenges & Solutions\n\
-         <!-- Technical or process obstacles encountered -->\n\
-         \n\
-         ## Impact Assessment\n\
-         \n\
-         - **Performance**: <!-- impact or \"none\" -->\n\
-         - **Security**: <!-- impact or \"none\" -->\n\
-         - **Maintenance**: <!-- impact or \"none\" -->\n\
-         \n\
-         ## Risks & Pitfalls\n\
-         \n\
-         - **Risk**: <!-- describe -->  **Mitigation**: <!-- describe or \"accepted\" -->\n\
-         \n\
-         ## Outcome & Lessons\n\
-         <!-- Fill in post-merge: results, metrics, lessons learned -->\n"
-    )
+    let template = crate::template::load().expect("the embedded ADR template is valid");
+    crate::template::render(&template, title)
 }
 
 #[cfg(test)]

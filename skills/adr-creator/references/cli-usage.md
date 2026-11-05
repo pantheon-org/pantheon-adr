@@ -181,6 +181,27 @@ Rationale text where more than 60% of the words are `describe`, `decision`,
 `context`, `placeholder`, `example`, `tbd` or `todo`. Such a section scores as
 if it were empty, cap included.
 
+### `pantheon-adr validate [slug]`
+
+Checks record files against their declared shape: the frontmatter against
+`assets/adr-frontmatter.schema.json`, and the body against the headings in
+`assets/adr.yaml`. With no slug it checks every record in the directory and
+reports a malformed one instead of stopping. It exits 1 when any record is
+invalid and 3 when a named slug does not exist.
+
+| Flag | Effect |
+| --- | --- |
+| `--json` | Emit `{total, invalid, records[{slug, issues[{location, message}]}]}`. |
+
+Beyond the schema it checks that `supersedes` and `superseded_by` name an
+existing record other than the record itself, and that `status` matches the
+last `history` entry.
+
+`validate` and `check` are independent: `validate` asks whether the file is
+well formed, `check` asks whether the prose is finished. A fresh template
+passes `validate` and fails `check`. See
+[Record Template and Schema](template-and-schema.md).
+
 ### `pantheon-adr review <slug>`
 
 Re-runs the check and, at 80 or above, moves the status to `review-requested`
@@ -194,7 +215,7 @@ Changes metadata. Never touches the prose.
 | Flag | Effect |
 | --- | --- |
 | `-d, --description <text>` | Replace the title. |
-| `-s, --status <status>` | One of `proposed`, `review-requested`, `accepted`, `deprecated`, `superseded`. |
+| `-s, --status <status>` | One of `proposed`, `review-requested`, `accepted`, `deprecated`, `superseded`. `superseded` needs a replacement: use `--superseded-by`, or pass it alongside. |
 | `--tags <a,b,c>` | Replace the tag list. |
 | `--superseded-by <slug>` | Retire this record in favour of `<slug>`, which must already exist. |
 
@@ -241,6 +262,14 @@ pantheon-adr status --json | jq -e '(.by_status.proposed // 0) == 0'
 
 Regenerates `index.md` from the records' frontmatter, grouped by status in
 lifecycle order. Derived output: overwrite it freely, never hand-edit it.
+
+### `pantheon-adr undocumented`
+
+Lists planning documents (`.context` by default, or `--source-dir`) that
+contain a decision signal such as `## Decision` or `We will` and that no
+record links under its frontmatter `related` list. Exits 2 when any are found
+and 0 when none are, so it can gate CI. `--json` prints
+`{"scanned": true, "undocumented": [{"path": "...", "indicator": "..."}]}`.
 
 ### `pantheon-adr sync`
 

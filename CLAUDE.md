@@ -7,8 +7,9 @@ bundled `adr-creator` agent skill. See `README.md` for what it does and how it i
 
 - `crates/adr/`: the only workspace member. `src/lib.rs` documents each module; `tests/integration.rs` holds the
   integration tests; `docs/design/` holds the design notes.
-- `skills/adr-creator/`: the skill (`SKILL.md`, `references/`, `scripts/`, `evals/`). `build.rs` embeds it in the
-  binary, so a change here changes the binary.
+- `skills/adr-creator/`: the skill (`SKILL.md`, `references/`, `evals/`, and `assets/`, which holds the record
+  template `assets/adr.yaml` and the frontmatter schema `assets/adr-frontmatter.schema.json`). `build.rs`
+  embeds it in the binary, so a change here changes the binary.
 - `.github/workflows/`: CI. `rust-ci.yml` is the source of truth for what must pass.
 - `.context/`: gitignored working state. Never commit it.
 
@@ -37,6 +38,7 @@ the "passed" counts.
   Do not skip them.
 - Markdown is linted by rumdl with `.rumdl.toml`. Shell scripts must pass shellcheck.
 - The Rust toolchain version is set in `rust-toolchain.toml`, `mise.toml` and `rust-ci.yml`. Change all three together.
-- The `pahdk-*` dependencies are pinned to a git tag in the root `Cargo.toml`. Bump the tag on purpose.
+- The `pahdk-*` dependencies are pinned in the root `Cargo.toml`, to a git tag when one exists. Both crates must share
+  one pin. They are on a `rev` of the dev-kit's `main` until a tag includes `validate`; move them to the tag then.
 - State is stored under `$XDG_DATA_HOME/tekhne/adr` (or `~/.local/share/tekhne/adr`). Keep that path.
 - Behaviour is a pure function of on-disk content plus an injectable "today", so tests need no clock.

@@ -164,6 +164,31 @@ enum Command {
         #[command(flatten)]
         dir: DirArgs,
     },
+    /// Validate records against the frontmatter schema and the body template.
+    ///
+    /// Checks every record, or just the one named. Exits 1 when any is invalid.
+    Validate {
+        /// The record's slug; every record when omitted.
+        slug: Option<String>,
+        /// Machine-readable output.
+        #[arg(long)]
+        json: bool,
+        #[command(flatten)]
+        dir: DirArgs,
+    },
+    /// Find planning documents with a decision that no record links to.
+    ///
+    /// Exits 2 when any are found, 0 when none are.
+    Undocumented {
+        /// Where planning documents live, relative to the working directory.
+        #[arg(long = "source-dir", default_value = ".context")]
+        source_dir: String,
+        /// Machine-readable output.
+        #[arg(long)]
+        json: bool,
+        #[command(flatten)]
+        dir: DirArgs,
+    },
     /// Wire the ADR hooks into the agent configs this project uses.
     Sync,
     /// Print a shell completion script for `pantheon-adr`.
@@ -378,6 +403,30 @@ fn main() {
             &adr_dir(dir.dir.as_deref()),
             &date::today(),
         )),
+        Command::Validate { slug, json, dir } => emit_gated(commands::validate_cmd(
+            &adr_dir(dir.dir.as_deref()),
+            slug.as_deref(),
+            json,
+        )),
+        Command::Undocumented {
+            source_dir,
+            json,
+            dir,
+        } => match commands::undocumented_cmd(
+            &adr_dir(dir.dir.as_deref()),
+            &cwd(),
+            Some(&source_dir),
+            json,
+        ) {
+            Ok((text, found)) => {
+                print!("{text}");
+                if found {
+                    process::exit(EXIT_UNDOCUMENTED);
+                }
+                Ok(())
+            }
+            Err(e) => Err(classify(e)),
+        },
         Command::Sync => emit(commands::sync_cmd(&cwd())),
         Command::Completion { shell } => {
             let mut cmd = Cli::command();
@@ -427,6 +476,9 @@ fn main() {
 
 /// A general failure.
 const EXIT_GENERAL: i32 = 1;
+
+/// `undocumented` found a decision with no record.
+const EXIT_UNDOCUMENTED: i32 = 2;
 
 /// A record or directory that does not exist.
 const EXIT_NOT_FOUND: i32 = 3;
@@ -716,8 +768,18 @@ mod tests {
         // machinery, and offering them for tab completion invites a human to
         // run one by hand.
         for visible in [
-            "init", "create", "draft", "check", "review", "list", "status", "update", "index",
-            "sync", "skill",
+            "init",
+            "create",
+            "draft",
+            "check",
+            "review",
+            "list",
+            "status",
+            "update",
+            "index",
+            "undocumented",
+            "sync",
+            "skill",
         ] {
             assert!(
                 script.contains(visible),

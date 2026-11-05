@@ -68,10 +68,11 @@ format and will fail on the first command.
 3. **Gather context before writing.** Run `pantheon-adr draft` for the branch's commits, its changed-file totals, any earlier decisions over the same files, and the list of sections still unfilled. `draft --bootstrap` turns the same material into a numbered question set. This is optional, and faster than reconstructing the branch by hand.
 4. **Fill the template in place.** Replace every `<!-- ... -->` placeholder with real prose and keep every heading exactly as generated. The rubric needs 30 or more words under `### Context`, 30 under `### Chosen Solution`, 20 under `### Rationale`, and one `## Impact Assessment` entry whose value is not `none`. **Stop if:** you cannot name a real rejected alternative under Options Considered; that gap means the decision is not yet understood.
 5. **Score it.** Run `pantheon-adr check <slug>` and iterate until the score is at least 80, or 95 with `--strict`. **Verify:** exit code 0 and `[complete]` in the output.
-6. **Request review.** Run `pantheon-adr review <slug>` to move the status to `review-requested`. It re-runs the check and refuses below 80.
-7. **Accept once ratified.** Run `pantheon-adr update <slug> -s accepted`. The transition is appended to the record's history automatically.
-8. **Regenerate the catalogue and commit the record with it.** `pantheon-adr index`, then commit both. Do not hand-edit `index.md`.
-9. **Supersede when the decision changes.** Create the replacement first, then run `pantheon-adr update <old-slug> --superseded-by <new-slug>`. The old record's status becomes `superseded`, the replacement gains a `supersedes` link back, and neither record's prose is touched. **Verify:** `pantheon-adr list -s superseded` shows the old slug.
+6. **Validate the shape.** Run `pantheon-adr validate <slug>` to check the frontmatter against `assets/adr-frontmatter.schema.json` and the body against the headings in `assets/adr.yaml`. **Verify:** exit code 0 and `ok` for the record. It reports a wrong field value or a missing heading; it does not judge the prose, which is `check`'s job.
+7. **Request review.** Run `pantheon-adr review <slug>` to move the status to `review-requested`. It re-runs the check and refuses below 80.
+8. **Accept once ratified.** Run `pantheon-adr update <slug> -s accepted`. The transition is appended to the record's history automatically.
+9. **Regenerate the catalogue and commit the record with it.** `pantheon-adr index`, then commit both. Do not hand-edit `index.md`.
+10. **Supersede when the decision changes.** Create the replacement first, then run `pantheon-adr update <old-slug> --superseded-by <new-slug>`. The old record's status becomes `superseded`, the replacement gains a `supersedes` link back, and neither record's prose is touched. **Verify:** `pantheon-adr list -s superseded` shows the old slug.
 
 ### Deriving an ADR from an existing document
 
@@ -114,6 +115,13 @@ pantheon-adr check adopt-opentelemetry
 Expected result: `Score: 100/100  [complete]` and exit 0 at or above 80; below that, the failing rules with their weights and exit 1.
 
 ```bash
+# Check the record's shape against the schema and the template.
+pantheon-adr validate adopt-opentelemetry
+```
+
+Expected result: `ok    adopt-opentelemetry` and exit 0; otherwise `FAIL` with each problem and its location (such as `frontmatter /status`) and exit 1. Omit the slug to check every record; `--json` for a machine-readable report.
+
+```bash
 # Move through the lifecycle.
 pantheon-adr review adopt-opentelemetry
 pantheon-adr update adopt-opentelemetry -s accepted --tags tracing,observability
@@ -148,10 +156,10 @@ Expected result: `sync` patches whichever agent harness configuration the projec
 
 ```bash
 # Find planning documents with a decision that no record points back at.
-./scripts/check-undocumented-decisions.sh
+pantheon-adr undocumented
 ```
 
-Expected result: exit 0 with a confirmation line when everything is covered, or exit 2 with a list of undocumented files. See [Deriving an ADR from an Existing Document](references/context-extraction.md).
+Expected result: exit 0 with a confirmation line when everything is covered, or exit 2 with a list of undocumented files (`--json` for a machine-readable list). See [Deriving an ADR from an Existing Document](references/context-extraction.md).
 
 ## Anti-Patterns
 
@@ -214,6 +222,7 @@ Expected result: exit 0 with a confirmation line when everything is covered, or 
 ## References
 
 - [ADR Lifecycle](references/adr-lifecycle.md) — the five statuses, their transitions, the history trail, and how superseding links both records
+- [Record Template and Schema](references/template-and-schema.md) — the shape of a record: `assets/adr.yaml`, `assets/adr-frontmatter.schema.json`, and what `validate` enforces
 - [CLI Usage](references/cli-usage.md) — every command and flag, the completeness rubric and its weights, exit codes, and JSON output shapes
 - [Deriving an ADR from an Existing Document](references/context-extraction.md) — recognising a binding decision already written down in a design doc, review, or planning note, and linking the record back to it for provenance
 - [Documenting Architecture Decisions](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions) — Michael Nygard's original essay grounding the ADR practice

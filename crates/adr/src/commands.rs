@@ -12,7 +12,7 @@ use pahdk_core::{Error, Result};
 
 use crate::completeness::{self, Report, PASS_THRESHOLD, STRICT_THRESHOLD};
 use crate::record::{BranchType, Record, Status};
-use crate::{draft, git, hooks, index, store, sync};
+use crate::{draft, git, hooks, index, store, sync, undocumented, validate};
 
 /// Everything `create` needs, gathered so the signature stays readable.
 #[derive(Debug, Default, Clone)]
@@ -311,7 +311,16 @@ pub fn update(dir: &Path, slug: &str, now: &str, args: &UpdateArgs<'_>) -> Resul
         changes.push("tags".to_string());
     }
     if let Some(status) = args.status {
-        record.transition(Status::parse(status)?, now);
+        let next = Status::parse(status)?;
+        if next == Status::Superseded
+            && args.superseded_by.is_none()
+            && record.meta.superseded_by.is_none()
+        {
+            return Err(Error::Config(format!(
+                "{slug:?} cannot be superseded without a replacement; pass --superseded-by <slug> instead of --status superseded"
+            )));
+        }
+        record.transition(next, now);
         changes.push(format!("status to {status}"));
     }
     if let Some(next) = args.superseded_by {
@@ -442,6 +451,113 @@ pub fn index_cmd(dir: &Path, today: &str) -> Result<String> {
         records.len(),
         if records.len() == 1 { "" } else { "s" }
     ))
+}
+
+/// Validate records against the frontmatter schema and the body template.
+///
+/// With a slug, validates that record; without, every record in `dir`. The
+/// verdict is an error when any record has an issue, so the caller exits
+/// non-zero after printing the report.
+pub fn validate_cmd(
+    dir: &Path,
+    slug: Option<&str>,
+    json: bool,
+) -> Result<(String, std::result::Result<(), Error>)> {
+    let reports = match slug {
+        Some(slug) => vec![validate::validate_one(dir, slug)?],
+        None => validate::validate_all(dir)?,
+    };
+    let invalid = reports.iter().filter(|r| !r.is_valid()).count();
+
+    let text = if json {
+        let payload = serde_json::json!({
+            "total": reports.len(),
+            "invalid": invalid,
+            "records": reports,
+        });
+        pahdk_core::output::to_json_pretty(&payload).map(|s| format!("{s}\n"))?
+    } else if reports.is_empty() {
+        format!("No records found in {}.\n", dir.display())
+    } else {
+        let mut out = String::new();
+        for r in &reports {
+            if r.is_valid() {
+                out.push_str(&format!("ok    {}\n", r.slug));
+                continue;
+            }
+            out.push_str(&format!("FAIL  {}\n", r.slug));
+            for issue in &r.issues {
+                out.push_str(&format!("        {}: {}\n", issue.location, issue.message));
+            }
+        }
+        out.push_str(&format!(
+            "\n{} record{} checked, {invalid} invalid.\n",
+            reports.len(),
+            if reports.len() == 1 { "" } else { "s" }
+        ));
+        out
+    };
+    let verdict = if invalid == 0 {
+        Ok(())
+    } else {
+        Err(Error::Config(format!(
+            "{invalid} of {} record(s) failed validation",
+            reports.len()
+        )))
+    };
+    Ok((text, verdict))
+}
+
+/// Report planning documents that hold a decision no record points back at.
+///
+/// Returns the report and whether any document was found, so the caller can
+/// exit non-zero. Like every other command, the ADR and source directories
+/// are resolved against the working directory.
+pub fn undocumented_cmd(
+    dir: &Path,
+    cwd: &Path,
+    source_dir: Option<&str>,
+    json: bool,
+) -> Result<(String, bool)> {
+    let source = source_dir
+        .filter(|s| !s.is_empty())
+        .unwrap_or(undocumented::DEFAULT_SOURCE_DIR);
+    let scan = undocumented::scan(cwd, dir, Path::new(source))?;
+    let found = !scan.undocumented.is_empty();
+
+    if json {
+        let text = pahdk_core::output::to_json_pretty(&scan).map(|s| format!("{s}\n"))?;
+        return Ok((text, found));
+    }
+    if !scan.scanned {
+        return Ok((
+            format!(
+                "No {source} directory found under {} - nothing to scan.\n",
+                cwd.display()
+            ),
+            false,
+        ));
+    }
+    if !found {
+        return Ok((
+            "All planning documents with decision indicators are linked from a record.\n"
+                .to_string(),
+            false,
+        ));
+    }
+    let mut out = String::from(
+        "WARNING: the following documents contain decision indicators but are not\n\
+         listed under any record's `related` frontmatter. Consider extracting an ADR\n\
+         for each (see references/context-extraction.md):\n\n",
+    );
+    for f in &scan.undocumented {
+        out.push_str(&format!("  {}\n    Indicator: {}\n\n", f.path, f.indicator));
+    }
+    out.push_str(&format!(
+        "Total: {} undocumented decision(s)\nRun `pantheon-adr list` to see existing records before creating new ones.\n",
+        scan.undocumented.len()
+    ));
+    Ok((out, true))
 }
 
 /// Wire the ADR hooks into whichever agent harnesses the project uses.

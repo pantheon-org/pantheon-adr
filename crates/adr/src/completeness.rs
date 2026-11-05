@@ -61,20 +61,29 @@ pub struct Report {
     pub caps_applied: Vec<String>,
 }
 
+/// The headings the rubric scores, matched by substring. The template must
+/// contain a heading for each; a test in `template` enforces it.
+pub const PROBLEM_SECTIONS: [&str; 2] = ["Problem Statement", "Context"];
+/// See [`PROBLEM_SECTIONS`].
+pub const SOLUTION_SECTION: &str = "Chosen Solution";
+/// See [`PROBLEM_SECTIONS`].
+pub const RATIONALE_SECTION: &str = "Rationale";
+/// See [`PROBLEM_SECTIONS`].
+pub const IMPACT_SECTION: &str = "Impact";
+
 /// Score `body` against the rubric, passing at `threshold`.
 pub fn check(body: &str, threshold: u32) -> Report {
     let sections = parse_sections(body);
     let placeholders = count_placeholders(body);
 
-    let (problem_ok, problem_words) =
-        section_check(&sections, &["Problem Statement", "Context"], 30);
-    let (solution_ok, solution_words) = section_check(&sections, &["Chosen Solution"], 30);
-    let (rationale_ok, _) = section_check(&sections, &["Rationale"], 20);
+    let (problem_ok, problem_words) = section_check(&sections, &PROBLEM_SECTIONS, 30);
+    let (solution_ok, solution_words) = section_check(&sections, &[SOLUTION_SECTION], 30);
+    let (rationale_ok, _) = section_check(&sections, &[RATIONALE_SECTION], 20);
 
     // A section with words in it still fails when those words are boilerplate.
-    let problem_ok = problem_ok && !is_boilerplate(&sections, &["Problem Statement", "Context"]);
-    let solution_ok = solution_ok && !is_boilerplate(&sections, &["Chosen Solution"]);
-    let rationale_ok = rationale_ok && !is_boilerplate(&sections, &["Rationale"]);
+    let problem_ok = problem_ok && !is_boilerplate(&sections, &PROBLEM_SECTIONS);
+    let solution_ok = solution_ok && !is_boilerplate(&sections, &[SOLUTION_SECTION]);
+    let rationale_ok = rationale_ok && !is_boilerplate(&sections, &[RATIONALE_SECTION]);
     let impact_ok = impact_check(&sections);
 
     let mut score = 0;
@@ -255,7 +264,7 @@ fn section_check(
 fn impact_check(sections: &BTreeMap<String, String>) -> bool {
     sections
         .iter()
-        .filter(|(sec, _)| sec.contains("Impact"))
+        .filter(|(sec, _)| sec.contains(IMPACT_SECTION))
         .flat_map(|(_, body)| body.lines())
         .filter(|line| line.trim_start().starts_with('-'))
         .filter_map(|line| {
