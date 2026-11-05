@@ -1,0 +1,37 @@
+name: Cargo Deny
+
+# Checks the dependency tree against deny.toml: RustSec advisories (including
+# yanked and unmaintained crates), licences, banned or duplicate crates, and
+# allowed registries and git sources. The advisory database changes without a
+# commit here, so a weekly run catches new advisories on an idle repository.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cargo-deny:
+    name: Cargo Deny
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install 1.96.1 --profile minimal
+          rustup default 1.96.1
+
+      - name: Check dependencies
+        run: bash .github/scripts/cargo-deny.sh
