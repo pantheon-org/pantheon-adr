@@ -521,8 +521,8 @@ checksum = "1a80800c0488c3a21695ea981a54918fbb37abf04f4d0720c453632255e2ff0e"
 
 [[package]]
 name = "pahdk-core"
-version = "0.0.0"
-source = "git+https://github.com/pantheon-org/pantheon-agentic-harness-dev-kit.git?rev=6d2e26052cdda1801332fab69730233a2df39e2e#6d2e26052cdda1801332fab69730233a2df39e2e"
+version = "0.1.0-rc.3"
+source = "git+https://github.com/pantheon-org/pantheon-agentic-harness-dev-kit.git?tag=v0.1.0-rc.3#508ba2cd3a1fe790a3e79cccb88eda879380bd7f"
 dependencies = [
  "jsonschema",
  "serde",
@@ -533,8 +533,8 @@ dependencies = [
 
 [[package]]
 name = "pahdk-install"
-version = "0.0.0"
-source = "git+https://github.com/pantheon-org/pantheon-agentic-harness-dev-kit.git?rev=6d2e26052cdda1801332fab69730233a2df39e2e#6d2e26052cdda1801332fab69730233a2df39e2e"
+version = "0.1.0-rc.3"
+source = "git+https://github.com/pantheon-org/pantheon-agentic-harness-dev-kit.git?tag=v0.1.0-rc.3#508ba2cd3a1fe790a3e79cccb88eda879380bd7f"
 dependencies = [
  "pahdk-core",
 ]
