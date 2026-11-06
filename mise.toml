@@ -1,6 +1,9 @@
 [tools]
 # Same toolchain as rust-toolchain.toml and the rust-ci workflow. Keep in sync.
 rust = { version = "1.96.1", components = "rustfmt,clippy" }
+# Workflow security linter. Keep in sync with `version` in
+# .github/workflows/zizmor.yml.
+zizmor = "1.32.0"
 hk = "latest"
 pkl = "latest"
 yq = "latest"

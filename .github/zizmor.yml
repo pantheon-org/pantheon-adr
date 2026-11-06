@@ -1,0 +1,34 @@
+# zizmor rule configuration for the zizmor workflow (.github/workflows/zizmor.yml).
+#
+# Every entry is a finding that existed when the gate was added and is
+# deliberately not fixed. The default answer to a zizmor finding is to fix the
+# workflow; an entry here needs a reason, and should be as narrow as the tool
+# allows so it cannot hide anything else.
+#
+# All four entries are in .github/workflows/release.yml, which cargo-dist
+# generates and overwrites on `dist generate`. Entries match on file, line and
+# column, so a regenerated file that moves a line makes the finding reappear and
+# fails the gate. When that happens, run the command in the workflow header,
+# check the finding is still the same one, and update the line and column here.
+# Do not edit release.yml by hand to avoid it: dist would undo the edit.
+
+rules:
+  excessive-permissions:
+    ignore:
+      # The workflow-level `contents: write` is what dist emits, so the release
+      # job can create the GitHub release and upload artifacts. The workflow
+      # runs only on a pushed version tag (pr-run-mode = "skip" in
+      # dist-workspace.toml).
+      - release.yml:18:3
+  template-injection:
+    ignore:
+      # The `dist` plan step expands `github.ref_name` into its command. The
+      # workflow runs only on a pushed version tag, and tags are created by
+      # maintainers, not by a pull request.
+      - release.yml:79:91
+  unpinned-images:
+    ignore:
+      # The build matrix is produced by dist's plan job. The container image
+      # comes from dist's own output, not from a pull request.
+      - release.yml:110:40
+      - release.yml:110:66

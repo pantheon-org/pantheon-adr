@@ -1,0 +1,63 @@
+name: zizmor
+
+# Static analysis for GitHub Actions security problems: credential persistence,
+# template injection, over-broad permissions, unpinned actions. A finding at
+# high severity fails the job.
+#
+# This runs beside Plumber rather than replacing it. Plumber reports without
+# blocking; zizmor blocks, and covers credential persistence and template
+# injection, which Plumber does not.
+#
+# No path filter, so the check always reports a conclusion: a required check
+# that is skipped blocks the pull request forever. Also runs on push to main as
+# a post-merge safety net.
+#
+# Scans .github only: the workflows and dependabot.yml. The action's default
+# input is the whole repository, which this gate does not need to cover.
+#
+# Run it locally with the same findings (zizmor is pinned in mise.toml):
+#   GH_TOKEN=$(gh auth token) mise exec -- zizmor --min-severity high \
+#     --config .github/zizmor.yml .github
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  # Supersede an in-flight run when the ref updates (e.g. a rebase), so
+  # stale runs are cancelled instead of piling onto the shared API quota.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  zizmor:
+    # The job name is the required status check context. Keep it stable: the
+    # ruleset matches on it, so renaming it leaves the old name required and
+    # every pull request waits for a check that no longer reports until the
+    # ruleset is updated.
+    name: zizmor
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: zizmorcore/zizmor-action@45d7276c9ca790aabd705e31ca99c6185c3e76dd # v0.8.1
+        with:
+          # Pinned exactly, like rumdl in mise.toml: a new zizmor release can
+          # add rules and fail pull requests that did not touch a workflow.
+          # Bump it on purpose, together with mise.toml.
+          version: 1.32.0
+          min-severity: high
+          inputs: .github
+          config: .github/zizmor.yml
+          # The repository does not upload to code scanning from here, and
+          # doing so would need security-events: write. Findings fail the job
+          # and show in its log instead.
+          advanced-security: false
