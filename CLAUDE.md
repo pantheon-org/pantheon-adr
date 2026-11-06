@@ -38,7 +38,6 @@ the "passed" counts.
   Do not skip them.
 - Markdown is linted by rumdl with `.rumdl.toml`. Shell scripts must pass shellcheck.
 - The Rust toolchain version is set in `rust-toolchain.toml`, `mise.toml` and `rust-ci.yml`. Change all three together.
-- The `pahdk-*` dependencies are pinned in the root `Cargo.toml`, to a git tag when one exists. Both crates must share
-  one pin. They are on a `rev` of the dev-kit's `main` until a tag includes `validate`; move them to the tag then.
+- The `pahdk-*` dependencies are pinned in the root `Cargo.toml`, to a git tag. Both crates must share one pin.
 - State is stored under `$XDG_DATA_HOME/tekhne/adr` (or `~/.local/share/tekhne/adr`). Keep that path.
 - Behaviour is a pure function of on-disk content plus an injectable "today", so tests need no clock.
