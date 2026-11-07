@@ -1,0 +1,9 @@
+name: Zizmor demo
+on: pull_request_target
+permissions: {}
+jobs:
+  demo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - run: echo demo
