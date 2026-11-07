@@ -31,6 +31,7 @@ jobs:
         with:
           persist-credentials: false
 
+      # The version must match rust-toolchain.toml; rust-ci.yml checks it.
       - name: Install Rust toolchain
         run: |
           rustup toolchain install 1.96.1 --profile minimal
