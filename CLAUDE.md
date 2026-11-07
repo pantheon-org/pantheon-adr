@@ -44,7 +44,9 @@ the "passed" counts.
   findings are listed in `.github/zizmor.yml` (matched by line and column) and `.github/actionlint.yaml`. After
   `dist generate`, re-run both linters and update the line numbers if they moved.
 - Markdown is linted by rumdl with `.rumdl.toml`. Shell scripts must pass shellcheck.
-- The Rust toolchain version is set in `rust-toolchain.toml`, `mise.toml` and `rust-ci.yml`. Change all three together.
+- The Rust toolchain version is set in `rust-toolchain.toml` (the source of truth), `mise.toml`, `rust-ci.yml` and
+  `cargo-deny.yml`, with `rust-version` in `Cargo.toml` as its major.minor. Change them together:
+  `.github/scripts/check-toolchain-version.sh` runs in `rust-ci.yml` and fails if they differ.
 - The `pahdk-*` dependencies are pinned in the root `Cargo.toml`, to a git tag. Both crates must share one pin.
 - State is stored under `$XDG_DATA_HOME/tekhne/adr` (or `~/.local/share/tekhne/adr`). Keep that path.
 - Behaviour is a pure function of on-disk content plus an injectable "today", so tests need no clock.
