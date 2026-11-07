@@ -24,8 +24,11 @@ jobs:
   audit:
     name: Audit skill
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Install pantheon-skill-auditor
         uses: pantheon-org/pantheon-skill-auditor@a71472ec078f54ff13b5b74b7e3786779ef28df9 # main at v0.3.1

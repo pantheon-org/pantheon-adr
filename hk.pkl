@@ -27,6 +27,16 @@ local preCommit = new Mapping<String, Step> {
         shell = "sh -c"
         check = "command -v shellcheck >/dev/null 2>&1 && shellcheck {{files}}"
     }
+    // Catches workflow mistakes yamllint cannot: unknown keys, bad expressions,
+    // `needs:` references, and shell problems inside `run:` blocks. Scoped to
+    // the workflow files so it only runs when one is staged. Reads
+    // .github/actionlint.yaml. It is a local gate: there is no actionlint
+    // workflow, so it is not a required status check.
+    ["actionlint"] {
+        glob = List(".github/workflows/*.yml", ".github/workflows/*.yaml")
+        shell = "sh -c"
+        check = "command -v actionlint >/dev/null 2>&1 && actionlint {{files}}"
+    }
 }
 
 // -- pre-push (matches the rust-ci workflow) --

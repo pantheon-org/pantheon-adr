@@ -18,8 +18,11 @@ jobs:
   build-test:
     name: Build, test, lint
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       # rustup is preinstalled on GitHub-hosted runners. Keep this version in
       # sync with rust-toolchain.toml.
