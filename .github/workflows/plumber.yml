@@ -41,7 +41,7 @@ jobs:
           persist-credentials: false
 
       - id: plumber
-        uses: getplumber/plumber@e9ad2dc6d6faa2dfd84395aac18e461284062640 # v0.7.16
+        uses: getplumber/plumber@ebc213aa45dccd233ce5c2630f0aafa8e8d650c5 # v0.7.18
         continue-on-error: true
         with:
           soft-fail: "true"
