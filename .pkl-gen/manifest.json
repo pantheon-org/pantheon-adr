@@ -1,6 +1,6 @@
 {
   "manifestVersion": 1,
-  "packageVersion": "0.4.1",
+  "packageVersion": "0.4.2",
   "files": {
     ".agnix.toml": {
       "class": "owned",
@@ -159,7 +159,7 @@
     },
     ".plumber.yaml": {
       "class": "owned",
-      "hash": "151bde3704f31000d8c13fcb16f05345a63c84bc85e69d6e0ebcaed585d027a9"
+      "hash": "5d17a34b7d8f4c30eeb426ec05c58818dee5ecb0976a044149ccc755f4b71981"
     },
     ".release-please-manifest.json": {
       "class": "seed",
@@ -194,7 +194,7 @@
     },
     "mise.toml": {
       "class": "owned",
-      "hash": "b92e4ef95fcbb3a1fa6f7ca8d0145bd473b3b5035567dca93d2b13c9eb4adcfa"
+      "hash": "2525e7773dc73ab4b87bc13325f5b7084e65be89c4258e2f1e70bf06136539df"
     },
     "release-please-config.json": {
       "class": "seed",

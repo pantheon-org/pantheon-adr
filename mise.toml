@@ -18,7 +18,7 @@ rumdl = "0.2.77"
 # Lints skill frontmatter and agent files. Pinned in the scaffold package (Tools.pkl).
 "github:agent-sh/agnix" = "0.56.6"
 # The scaffold runner, released together with the package that rendered this file.
-"github:pantheon-org/pantheon-scaffold" = "0.4.1"
+"github:pantheon-org/pantheon-scaffold" = "0.4.2"
 
 [settings]
 # Refuse tool releases younger than a week when resolving versions.
