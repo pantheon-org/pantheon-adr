@@ -1,0 +1,4 @@
+# Tools this repository needs on top of the shared ones in mise.toml. Seeded once by the scaffold
+# runner and yours to edit: the runner never rewrites it. A tool listed in both files takes its
+# version from mise.toml, which the runner owns, so shared pins cannot be overridden here.
+[tools]

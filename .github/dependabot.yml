@@ -1,5 +1,3 @@
-version: 2
-
 # Keeps Cargo dependencies and the SHA-pinned GitHub Actions current. Minor and
 # patch bumps are grouped into one weekly PR per ecosystem to cut review noise;
 # major bumps are raised individually so breaking changes are reviewed alone.
@@ -9,55 +7,76 @@ version: 2
 # Cargo.toml. Dependabot cannot resolve them (dependency_file_not_resolvable), and
 # that error fails the whole cargo job, so they are ignored below. Bump the tag by
 # hand when pantheon-agentic-harness-dev-kit cuts a release.
-
+#
+# release.yml caveat: release.yml is written by `dist generate` from dist-workspace.toml, which
+# Dependabot cannot edit, so a Dependabot bump of upload-artifact or download-artifact inside
+# it would fail the dist check. They are ignored below: change their commits in
+# dist-workspace.toml and run `dist generate`.
+version: 2
 updates:
-  - package-ecosystem: "cargo"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    open-pull-requests-limit: 5
-    # Wait 7 days after a release before opening an update PR, so a yanked or
-    # compromised release has time to surface before we adopt it.
-    cooldown:
-      default-days: 7
-    ignore:
-      - dependency-name: "pahdk-core"
-      - dependency-name: "pahdk-install"
-    labels:
-      - "dependencies"
-      - "rust"
-    commit-message:
-      prefix: "chore"
-      prefix-development: "chore"
-      include: "scope"
-    groups:
-      cargo-minor-patch:
-        patterns:
-          - "*"
-        update-types:
-          - "minor"
-          - "patch"
-
-  # Keeps the SHA pins in .github/workflows current.
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    open-pull-requests-limit: 5
-    cooldown:
-      default-days: 7
-    labels:
-      - "dependencies"
-      - "github-actions"
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-    groups:
-      actions-minor-patch:
-        patterns:
-          - "*"
-        update-types:
-          - "minor"
-          - "patch"
+- package-ecosystem: cargo
+  directory: /
+  schedule:
+    interval: weekly
+    day: monday
+  open-pull-requests-limit: 5
+  cooldown:
+    default-days: 7
+  ignore:
+  - dependency-name: pahdk-core
+  - dependency-name: pahdk-install
+  labels:
+  - dependencies
+  - rust
+  commit-message:
+    prefix: chore
+    prefix-development: chore
+    include: scope
+  groups:
+    cargo-minor-patch:
+      patterns:
+      - '*'
+      update-types:
+      - minor
+      - patch
+- package-ecosystem: github-actions
+  directory: /
+  schedule:
+    interval: weekly
+    day: monday
+  open-pull-requests-limit: 5
+  cooldown:
+    default-days: 7
+  exclude-paths:
+  - .github/workflows/plumber.yml
+  - .github/workflows/sync-labels.yml
+  - .github/workflows/pr-auto-rebase.yml
+  - .github/workflows/release-automerge.yml
+  - .github/workflows/commit-types.yml
+  - .github/workflows/conventional-commits.yml
+  - .github/workflows/release-please.yml
+  - .github/workflows/zizmor.yml
+  - .github/workflows/agnix.yml
+  - .github/workflows/aislop.yml
+  - .github/workflows/rust-ci.yml
+  - .github/workflows/cargo-deny.yml
+  - .github/workflows/inline-scripts.yml
+  - .github/workflows/audit-skill.yml
+  - .github/workflows/scaffold-check.yml
+  - .github/workflows/dist-check.yml
+  ignore:
+  - dependency-name: actions/upload-artifact
+  - dependency-name: actions/download-artifact
+  labels:
+  - dependencies
+  - github-actions
+  commit-message:
+    prefix: ci
+    include: scope
+  groups:
+    actions-minor-patch:
+      patterns:
+      - '*'
+      update-types:
+      - minor
+      - patch

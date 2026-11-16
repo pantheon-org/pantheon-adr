@@ -8,3 +8,8 @@ exclude = ["target/**"]
 
 [MD010]
 code-blocks = false
+
+# The pull request template starts with an HTML comment and a level 2 heading, so MD041 can never pass for it.
+# Every other file is still checked by MD041.
+[per-file-ignores]
+".github/pull_request_template.md" = ["MD041"]
