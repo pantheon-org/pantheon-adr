@@ -1,0 +1,25 @@
+// Written by `pantheon-scaffold init`. From here on `pantheon-scaffold upgrade` edits the amends line and the imports of the package, and everything else is yours.
+amends "package://github.com/pantheon-org/pantheon-scaffold/releases/download/v0.4.1/pantheon-scaffold@0.4.1::sha256:24b26cdafc9c35cb60c334d6226596ed6f9fce2a98699a66f13baa2826f79781#/Config.pkl"
+
+import "package://github.com/pantheon-org/pantheon-scaffold/releases/download/v0.4.1/pantheon-scaffold@0.4.1::sha256:24b26cdafc9c35cb60c334d6226596ed6f9fce2a98699a66f13baa2826f79781#/Builtins.pkl"
+
+options {
+  toolchain = "1.96.1"
+  skills = true
+  skillName = "adr-creator"
+  binary = true
+  crateName = "adr"
+  gitDependencyIgnore { "pahdk-core"; "pahdk-install" }
+  // The Monday merge of the release PR stays on, as it was before the adoption (the package default is manual).
+  releaseAutomerge = "always"
+}
+
+workflows { ...Builtins.standardWorkflows(options) }
+
+files {
+  ...Builtins.standardFiles(options)
+  ...Builtins.baseFiles(options)
+  ...Builtins.toolingFiles(options)
+  ...Builtins.miseFiles(options)
+  ...Builtins.hkFiles(options)
+}

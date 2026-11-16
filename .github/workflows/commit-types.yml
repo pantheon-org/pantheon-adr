@@ -1,5 +1,3 @@
-name: Commit Types
-
 # Keeps the PR title gate honest. conventional-commits.yml carries a copy of
 # the allowed commit types inside its regex, because it runs on
 # pull_request_target and must not read repository files. This runs on an
@@ -13,41 +11,41 @@ name: Commit Types
 # be a required status check: a required check that is skipped blocks the pull
 # request forever, so only change this to required after removing the filter.
 # Also runs on push to main as a post-merge safety net.
-on:
+name: Commit Types
+'on':
   pull_request:
-    types: [opened, synchronize, reopened]
-    branches: [main]
+    types:
+    - opened
+    - synchronize
+    - reopened
+    branches:
+    - main
     paths:
-      - ".github/commit-types.txt"
-      - ".github/workflows/conventional-commits.yml"
-      - ".github/workflows/commit-types.yml"
-      - ".github/scripts/check-commit-types.sh"
+    - .github/commit-types.txt
+    - .github/workflows/conventional-commits.yml
+    - .github/workflows/commit-types.yml
+    - .github/scripts/check-commit-types.sh
   push:
-    branches: [main]
+    branches:
+    - main
     paths:
-      - ".github/commit-types.txt"
-      - ".github/workflows/conventional-commits.yml"
-      - ".github/workflows/commit-types.yml"
-      - ".github/scripts/check-commit-types.sh"
-
+    - .github/commit-types.txt
+    - .github/workflows/conventional-commits.yml
+    - .github/workflows/commit-types.yml
+    - .github/scripts/check-commit-types.sh
 permissions:
   contents: read
-
 concurrency:
-  # Supersede an in-flight run when the ref updates (e.g. a rebase), so
-  # stale runs are cancelled instead of piling onto the shared API quota.
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
   commit-types:
     name: Commit Types
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Check the gate has not drifted from the canonical list
-        run: bash .github/scripts/check-commit-types.sh
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+    - name: Check the gate has not drifted from the canonical list
+      run: bash .github/scripts/check-commit-types.sh

@@ -5,8 +5,7 @@ rust = { version = "1.96.1", components = "rustfmt,clippy" }
 # Workflow linter (expressions, `needs:`, shell in `run:` blocks). Pinned exactly,
 # like zizmor, so a new release cannot fail a commit that did not touch a rule.
 actionlint = "1.7.12"
-# Workflow security linter. Keep in sync with `version` in
-# .github/workflows/zizmor.yml.
+# Workflow security linter. Pinned in the scaffold package (Tools.pkl).
 zizmor = "1.32.0"
 hk = "latest"
 pkl = "latest"
@@ -16,13 +15,20 @@ shellcheck = "latest"
 # rumdl is pre-1.0, so a minor bump can add rules and change what the lint gate
 # reports. Pinned exactly (unlike the other linters), bumped on purpose.
 rumdl = "0.2.77"
-# Lints skill frontmatter and agent files. Keep in sync with AGNIX_VERSION in
-# .github/workflows/agnix.yml.
+# Lints skill frontmatter and agent files. Pinned in the scaffold package (Tools.pkl).
 "github:agent-sh/agnix" = "0.56.6"
+# The scaffold runner, released together with the package that rendered this file.
+"github:pantheon-org/pantheon-scaffold" = "0.4.1"
 
 [settings]
 # Refuse tool releases younger than a week when resolving versions.
 minimum_release_age = "7d"
+# Record every tool in mise.lock with its checksum, and refuse a tool whose provenance
+# attestation does not verify. Limited to the platforms the runner is built for: with no
+# list mise locks every platform and names the package zip for the ones with no runner.
+lockfile = true
+locked_verify_provenance = true
+lockfile_platforms = ["linux-x64", "linux-arm64", "macos-arm64"]
 
 [env]
 # Wrap hk-invoked git hooks in `mise x` so pinned tools are on PATH without

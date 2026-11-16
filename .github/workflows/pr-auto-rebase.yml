@@ -1,5 +1,3 @@
-name: Auto-rebase PR branches
-
 # The `main` ruleset requires linear history and a strict "branches must be up
 # to date" status-check policy, so every push to `main` marks all open PRs as
 # BEHIND and blocks them until rebased. This workflow rebases those branches
@@ -9,47 +7,38 @@ name: Auto-rebase PR branches
 #
 # Needs the org secret GH_APP_PRIVATE_KEY to be available to this repository and
 # the App installed on it with contents and pull-requests write.
-
-on:
+name: Auto-rebase PR branches
+'on':
   push:
-    branches: [main]
-  workflow_dispatch:
-
-# The default token is unused; all PR operations run under the App token.
+    branches:
+    - main
+  workflow_dispatch: {}
 permissions:
   contents: read
-
-# A full sweep rebases every behind PR, so a newer run supersedes an older one.
 concurrency:
   group: pr-auto-rebase
   cancel-in-progress: true
-
 jobs:
   rebase:
     name: Rebase behind PR branches
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Mint pantheon-ai-bot token
-        id: app-token
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
-        with:
-          # Client ID for the pantheon-ai-bot App (public identifier, not a secret).
-          client-id: "Iv23ligzn16vkDCWfHgc"
-          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          permission-contents: write
-          permission-pull-requests: write
-
-      # The script is read from the repository, so the job needs a copy of it. Only
-      # .github/scripts is fetched, with no credentials: the script uses gh alone.
-      - name: Checkout scripts
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-          sparse-checkout: .github/scripts
-
-      - name: Rebase behind, non-draft PRs
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          GH_REPO: ${{ github.repository }}
-        run: bash .github/scripts/auto-rebase.sh
+    - name: Mint pantheon-ai-bot token
+      id: app-token
+      uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+      with:
+        client-id: Iv23ligzn16vkDCWfHgc
+        private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+        permission-contents: write
+        permission-pull-requests: write
+    - name: Checkout scripts
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+        sparse-checkout: .github/scripts
+    - name: Rebase behind, non-draft PRs
+      run: bash .github/scripts/auto-rebase.sh
+      env:
+        GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        GH_REPO: ${{ github.repository }}

@@ -1,0 +1,52 @@
+// Rendered by pantheon-scaffold from scaffold.pkl. Do not edit: the runner owns this file and refuses to overwrite a hand edit.
+// The steps of the shared hooks. hk.pkl imports this file and adds the repository's own steps.
+// Tools are pinned in mise.toml; HK_MISE=1 runs each hook under `mise x`.
+module pantheon.hk.shared
+
+import "package://github.com/jdx/hk/releases/download/v1.49.0/hk@1.49.0#/Config.pkl" as hk
+
+/// The steps of the pre-commit hook and of `hk check` and `hk fix`: fast, staged files only. `check` verifies, `fix` mutates.
+function preCommit(): Mapping<String, hk.Step> = new Mapping<String, hk.Step> {
+    ["rustfmt"] {
+        glob = List("*.rs")
+        check = "cargo fmt --all --check"
+        fix = "cargo fmt --all"
+    }
+    ["rumdl"] {
+        glob = List("*.md")
+        check = "rumdl check --config .rumdl.toml {{files}}"
+        fix = "rumdl check --fix --config .rumdl.toml {{files}}"
+    }
+    ["yamllint"] {
+        glob = List("*.yml", "*.yaml")
+        shell = "sh -c"
+        check = "command -v yq >/dev/null 2>&1 && yq eval '.' {{files}} >/dev/null"
+    }
+    ["shellcheck"] {
+        glob = List("*.sh")
+        shell = "sh -c"
+        check = "command -v shellcheck >/dev/null 2>&1 && shellcheck {{files}}"
+    }
+    // Catches workflow mistakes yamllint cannot: unknown keys, bad expressions,
+    // `needs:` references, and shell problems inside `run:` blocks. Scoped to
+    // the workflow files so it only runs when one is staged. Reads
+    // .github/actionlint.yaml. It is a local gate: there is no actionlint
+    // workflow, so it is not a required status check.
+    ["actionlint"] {
+        glob = List(".github/workflows/*.yml", ".github/workflows/*.yaml")
+        shell = "sh -c"
+        check = "command -v actionlint >/dev/null 2>&1 && actionlint {{files}}"
+    }
+}
+
+/// The steps of the pre-push hook, matching the rust-ci workflow.
+function prePush(): Mapping<String, hk.Step> = new Mapping<String, hk.Step> {
+    ["clippy"] {
+        glob = List("*.rs", "Cargo.toml", "Cargo.lock")
+        check = "cargo clippy --workspace --all-targets --locked -- -D warnings"
+    }
+    ["test"] {
+        glob = List("*.rs", "Cargo.toml", "Cargo.lock")
+        check = "cargo test --workspace --locked"
+    }
+}

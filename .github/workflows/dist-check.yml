@@ -1,0 +1,46 @@
+# release.yml is written by `dist generate` from dist-workspace.toml and must not be
+# edited by hand. This check fails when the two disagree, for example after a
+# Dependabot bump of an action inside release.yml: update the commit in
+# dist-workspace.toml too, then run `dist generate`.
+name: Dist check
+'on':
+  pull_request:
+    branches:
+    - main
+    paths:
+    - dist-workspace.toml
+    - .github/workflows/release.yml
+    - Cargo.toml
+    - .github/workflows/dist-check.yml
+  push:
+    branches:
+    - main
+    paths:
+    - dist-workspace.toml
+    - .github/workflows/release.yml
+    - Cargo.toml
+    - .github/workflows/dist-check.yml
+  workflow_dispatch: {}
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  dist-check:
+    name: Check release.yml against dist-workspace.toml
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DIST_VERSION: 0.32.0
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+    - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
+      with:
+        version: 2026.10.25
+        install: false
+        cache: false
+    - name: Compare release.yml with what dist generate writes
+      run: mise x "aqua:axodotdev/cargo-dist@${DIST_VERSION}" -- dist generate --check
